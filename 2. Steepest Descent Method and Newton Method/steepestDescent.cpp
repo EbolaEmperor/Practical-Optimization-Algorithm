@@ -162,6 +162,7 @@ double min_SDM(double eps = 1e-6)
         double lambda = argmin_1dim(fder_1dim, fder2_1dim, 0, eps);
         current = current + lambda * searchDirection;
         printf("step: %d,  current: (%lf, %lf),  direction: (%lf, %lf),  f = %lf\n", ++step, current[0], current[1], searchDirection[0], searchDirection[1], f(current));
+        // 这是用于输出每一步迭代信息的测试语句，可以删除
     }
     return f(current);
 }
