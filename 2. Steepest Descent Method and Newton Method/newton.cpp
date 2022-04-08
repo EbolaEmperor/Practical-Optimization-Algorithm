@@ -1,6 +1,6 @@
 /***************************************************************
  *
- * 这是一个最速下降法的通用最优化程序
+ * 这是一个牛顿法的通用最优化程序
  * 其中线搜索采用了牛顿单点插值法
  * 实际应用时需要将：
  *   - f设为待优化函数
@@ -8,6 +8,7 @@
  *   - hessian设为f的Hessian矩阵
  *   - current设为初始迭代位置
  * 其它模块无需作修改
+ * 注意：牛顿法并不适用于所有函数，可能会陷入死循环
  * 
  * copyright © 2022 Wenchong Huang, All rights reserved.
  *
@@ -95,6 +96,76 @@ double norm(const vector<double> &a)
     return sqrt(x);
 }
 
+vector< vector<double> > transpose(const vector< vector<double> > &A)
+// 矩阵转置，仅能用于下三角阵转置为上三角阵
+{
+    int n = A.size();
+    vector< vector<double> > B(n);
+    for(int i = 0; i < n; i++)
+        for(int j = i; j < n; j++)
+            B[i].push_back(A[j][i]);
+    return B;
+}
+
+vector< vector<double> > cholesky(const vector< vector<double> > &A)
+// cholesky分解
+{
+    int n = A.size();
+    vector< vector<double> > L(n);
+    for(int i = 0; i < n; i++)
+        L[i].resize(i+1);
+    for(int j = 0; j < n; j++)
+    {
+        L[j][j] = A[j][j];
+        for(int k = 0; k < j; k++)
+            L[j][j] -= L[j][k]*L[k][k]*L[j][k];
+        for(int i = j+1; i < n; i++)
+        {
+            L[i][j] = A[i][j];
+            for(int k = 0; k < j; k++)
+                L[i][j] -= L[i][k]*L[k][k]*L[j][k];
+            L[i][j] /= L[j][j];
+        }
+    }
+    return L;
+}
+
+vector<double> solveUnitLowerTriangular(const vector< vector<double> > &A, const vector<double> &b)
+// 求解单位下三角线性方程组
+{
+    int n = A.size();
+    vector<double> x;
+    for(double v : b)
+        x.push_back(v);
+    for(int i = 0; i < n; i++)
+        for(int j = i+1; j < n; j++)
+            x[j] -= x[i] * A[j][i];
+    return x;
+}
+
+vector<double> solveUnitUpperTriangular(const vector< vector<double> > &A, const vector<double> &b)
+// 求解单位上三角线性方程组
+{
+    int n = A.size();
+    vector<double> x;
+    for(double v : b)
+        x.push_back(v);
+    for(int i = n-1; i >= 0; i--)
+        for(int j = 0; j < i; j++)
+            x[j] -= x[i] * A[j][i];
+    return x;
+}
+
+vector<double> solveHessianEquation(const vector< vector<double> > &A, const vector<double> &b)
+// 用改进Cholesky分解法求解方程Ax=b，其中A是一个Hessian阵（对称正定）
+{
+    vector< vector<double> > L = cholesky(A);
+    vector<double> y = solveUnitLowerTriangular(L, b);
+    for(int i = 0; i < y.size(); i++)
+        y[i] /= L[i][i];
+    return solveUnitUpperTriangular(transpose(L), y);
+}
+
 double innerProduct(const vector< vector<double> > & A, const vector<double> &x)
 // 计算x^TAx的值，其中A是一个Hessian阵
 {
@@ -151,16 +222,16 @@ double argmin_1dim(double (*f1)(double), double (*f2)(double), double x, double 
     }
 }
 
-double min_SDM(double eps = 1e-6)
-// 最速下降法的主程序
+double min_newton(double eps = 1e-6)
+// 牛顿法的主程序
 {
     int step = 0;
     while(norm(grad(current))>eps)
     {
         step++;
-        searchDirection = -grad(current);
+        searchDirection = solveHessianEquation(hessian(current), -grad(current));
         searchDirection = (1.0/norm(searchDirection)) * searchDirection;
-        double lambda = argmin_1dim(fder_1dim, fder2_1dim, 0, eps);
+        double lambda = argmin_1dim(fder_1dim, fder2_1dim, 0, 1e-5*eps);
         current = current + lambda * searchDirection;
         printf("step: %d,  current: (%lf, %lf),  direction: (%lf, %lf),  f = %lf\n", step, current[0], current[1], searchDirection[0], searchDirection[1], f(current));
         // 这是用于输出每一步迭代信息的测试语句，可以删除
@@ -173,7 +244,7 @@ int main()
 {
     current.push_back(-1.2);
     current.push_back(1.0);
-    double ans = min_SDM(1e-3);
+    double ans = min_newton(1e-3);
     printf("min f = f(%.3lf,%.3lf) = %.3lf\n", current[0], current[1], ans);
     return 0;
 }
