@@ -1,6 +1,7 @@
 /***************************************************************
  *
  * 这是一个矩阵运算库，为了方便以后设计算法更加简洁，特编写以用
+ * 版本号：v1.0.2
  * 
  * copyright © 2022 Wenchong Huang, All rights reserved.
  *
@@ -29,15 +30,12 @@ public:
         memset(a, 0, sizeof(double)*(n*m));
     }
     Matrix(const Matrix &A){
-        Matrix(A.n, A.m);
+        n = A.n;
+        m = A.m;
+        a = new double[n*m];
         for(int i = 0; i < n; i++)
             for(int j = 0; j < m; j++)
                 a[i*m+j] = A[i][j];
-    }
-    Matrix(Matrix && A){
-       n = A.n;
-       m = A.m;
-       a = std::move(A.a);
     }
     ~Matrix(){
         delete a;
