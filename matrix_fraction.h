@@ -164,6 +164,30 @@ public:
         for(int i = 0; i < n; i++)
             std::swap(a[i*m+r1], a[i*m+r2]);
     }
+
+    friend fracMatrix solve(fracMatrix A, fracMatrix b){
+        if(A.m!=A.n || A.m!=b.n){
+            std::cerr << "fracMatrix Error! Undefined equation!" << std::endl;
+            exit(-1);
+        }
+        int n = A.n;
+        fracMatrix x(n,1);
+        for(int i = 0; i < n; i++){
+            int p = i;
+            while(p<n && A.element(p,i)==0) p++;
+            if(p!=i) A.swaprow(i,p);
+            for(int j = 0; j < n; j++){
+                if(i==j) continue;
+                fraction coef = A.element(j,i)/A.element(i,i);
+                for(int k = i; k < n; k++)
+                    A.element(j,k) -= A.element(i,k)*coef;
+                b.element(j,0) -= b.element(i,0)*coef;
+            }
+        }
+        for(int i = 0; i < n; i++)
+            x.element(i,0) = b.element(i,0)/A.element(i,i);
+        return x;
+    }
 };
 
 fracMatrix hilbert(const int &n){
