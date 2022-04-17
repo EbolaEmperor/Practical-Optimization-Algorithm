@@ -1,7 +1,7 @@
 /***************************************************************
  *
  * 这是一个用朴素共轭梯度法精确求解方程Ax=b的通用最优化程序
- * 调用CG_exact(A,b,x)即可，其中x为初始迭代位置
+ * 调用CG_accurate(A,b,x)即可，其中x为初始迭代位置
  * main函数中是使用示例，以n阶Hilbert矩阵为例
  * 该算法能在有限步收敛到精确解，但速度很慢
  * 
@@ -13,7 +13,7 @@
 #include "../matrix_fraction.h"
 using namespace std;
 
-fracMatrix CG_exact(const fracMatrix &A, const fracMatrix &b, fracMatrix x){
+fracMatrix CG_accurate(const fracMatrix &A, const fracMatrix &b, fracMatrix x){
     fracMatrix r = A*x-b;
     fracMatrix p = -r;
     long long step = 0;
@@ -34,7 +34,7 @@ fracMatrix CG_exact(const fracMatrix &A, const fracMatrix &b, fracMatrix x){
 int main(){
     int n;
     cin >> n;
-    fracMatrix x = CG_exact(hilbert(n), ones(n,1), zeros(n,1));
+    fracMatrix x = CG_accurate(hilbert(n), ones(n,1), zeros(n,1));
     cout << "ans = " << x.T() << endl;
     return 0;
 }
