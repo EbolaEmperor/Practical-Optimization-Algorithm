@@ -14,6 +14,14 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 
+class Matrix;
+
+Matrix hilbert(const int &n);
+Matrix zeros(const int &n, const int &m);
+Matrix ones(const int &n, const int &m);
+Matrix eye(const int &n);
+double value(const Matrix &A);
+
 class Matrix{
 private:
     double *a;
@@ -60,7 +68,50 @@ public:
         return a + r*m;
     }
 
-    Matrix operator + (const Matrix &B) {
+    friend Matrix diag(const Matrix &A){
+        if(A.n==1 && A.m>0){
+            Matrix D(A.m, A.m);
+            for(int i = 0; i < A.m; i++)
+                D[i][i] = A[0][i];
+            return D;
+        } else if(A.m==1 && A.n>0){
+            Matrix D(A.n, A.n);
+            for(int i = 0; i < A.n; i++)
+                D[i][i] = A[i][0];
+            return D;
+        } else {
+            int n = std::min(A.n,A.m);
+            Matrix D(n,1);
+            for(int i = 0; i < n; i++)
+                D[i][0] = A[i][i];
+            return D;
+        }
+    }
+
+    // 将矩阵以第r行第c列为左上角的子矩阵设为rhs
+    void setSubmatrix(const int &r, const int &c, const Matrix &rhs){
+        if(r<0 || c<0 || r+rhs.n>n || c+rhs.m>m){
+            std::cerr << "Matrix Error! setSubmatrix::: out of range!" << std::endl;
+            exit(-1);
+        }
+        for(int i = 0; i < rhs.n; i++)
+            for(int j = 0; j < rhs.m; j++)
+                a[(r+i)*m+(j+c)] = rhs[i][j];
+    }
+
+    Matrix getSubmatrix(const int &r1, const int &r2, const int &c1, const int &c2) const{
+        if(r1<0 || c1<0 || r2>=n || c2>=m || r2<r1 || c2<c1){
+            std::cerr << "Matrix Error! getSubmatrix::: out of range!" << std::endl;
+            exit(-1);
+        }
+        Matrix sub(r2-r1+1, c2-c1+1);
+        for(int i = 0; i < r2-r1+1; i++)
+            for(int j = 0; j < c2-c1+1; j++)
+                sub[i][j] = a[(r1+i)*m+(c1+j)];
+        return sub;
+    }
+
+    Matrix operator + (const Matrix &B) const {
         if(n!=B.n || m!=B.m){
             std::cerr << "Matrix Error! Undefined Addition!" << std::endl;
             exit(-1);
@@ -72,7 +123,7 @@ public:
         return C;
     }
 
-    Matrix operator - () {
+    Matrix operator - () const {
         Matrix C(n, m);
         for(int i = 0; i < C.n; i++)
             for(int j = 0; j < C.m; j++)
@@ -80,7 +131,7 @@ public:
         return C;
     }
 
-    Matrix operator - (const Matrix &B) {
+    Matrix operator - (const Matrix &B) const {
         if(n!=B.n || m!=B.m){
             std::cerr << "Matrix Error! Undefined Subtraction!" << std::endl;
             exit(-1);
@@ -113,7 +164,7 @@ public:
         return C;
     }
 
-    Matrix T(){
+    Matrix T() const{
         Matrix C(m, n);
         for(int i = 0; i < n; i++)
             for(int j = 0; j < m; j++)
@@ -155,6 +206,75 @@ public:
         }
         for(int i = 0; i < n; i++)
             std::swap(a[i*m+r1], a[i*m+r2]);
+    }
+
+    // 解方程Ax=b，算法为列主元法Gauss消元
+    friend Matrix solve(Matrix A, Matrix b){
+        if(A.m!=A.n || A.n!=b.n || A.m==0){
+            std::cerr << "Matrix Error! The method solve() cannot solve an ill-posed equation!" << std::endl;
+            return Matrix();
+        }
+        int n = A.n;
+        Matrix x(n,1);
+        for(int i = 0; i < n; i++){
+            int p = i;
+            for(int j=i; j<n; j++)
+                if(fabs(A[j][i])>fabs(A[p][i])) p=j;
+            if(p!=i) A.swaprow(i,p);
+            if(!A[i][i]){
+                std::cerr << "Matrix Error! The method solve() cannot solve an singular equation!" << std::endl;
+                return Matrix();
+            }
+            for(int j = 0; j < n; j++){
+                if(i==j) continue;
+                double coef = A[j][i]/A[i][i];
+                for(int k = i; k < n; k++)
+                    A[j][k] -= A[i][k]*coef;
+                b[j][0] -= b[i][0]*coef;
+            }
+        }
+        for(int i = 0; i < n; i++)
+            x[i][0] = b[i][0]/A[i][i];
+        return x;
+    }
+
+    // Gill-Murray修正Cholesky分解
+    void gillMurray(Matrix &L, Matrix &D, Matrix &E) const{
+        if(m!=n || n==0){
+            std::cerr << "Matrix Error! The method gillMurray() cannot apply on a non-square or empty matrix!" << std::endl;
+            exit(-1);
+        }
+        Matrix G(*this);
+        double gamma = 0, xi = 0;
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++)
+                if(i==j) gamma = std::max(gamma, fabs(a[i*m+j]));
+                else xi = std::max(xi, fabs(a[i*m+j]));
+        double nu = std::max(1.0, sqrt(n*n-1));
+        double beta2 = std::max(std::max(gamma,xi/nu),1e-6);
+        Matrix c(n,n);
+        for(int i = 0; i < n; i++)
+            c[i][i] = a[i*m+i];
+        L = eye(n);
+        D = zeros(1,n);
+        E = zeros(1,n);
+        for(int j = 0; j < n; j++){
+            int q = j;
+            for(int k = j+1; k < n; k++)
+                if(fabs(c[k][k])>fabs(c[q][q])) q = k;
+            if(j!=q) G.swaprow(j,q), G.swapcol(j,q);
+            for(int k = 0; k < j; k++)
+                L[j][k] = c[j][k]/D[0][k];
+            if(j==0) c.setSubmatrix(j+1,j, G.getSubmatrix(j+1,n-1,j,j));
+            else if(j<n-1) c.setSubmatrix(j+1,j, G.getSubmatrix(j+1,n-1,j,j) - c.getSubmatrix(j+1,n-1,0,j-1) * L.getSubmatrix(j,j,0,j-1).T() );
+            double theta = 0;
+            for(int k = j+1; k < n; k++)
+                theta = std::max(theta, fabs(c[k][j]));
+            D[0][j] = std::max(1e-3, std::max(fabs(c[j][j]), theta*theta/beta2));
+            E[0][j] = D[0][j] - c[j][j];
+            for(int i = j+1; i < n; i++)
+                c[i][i] -= c[i][j]*c[i][j]/D[0][j];
+        }
     }
 };
 
