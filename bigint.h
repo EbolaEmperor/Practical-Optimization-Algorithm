@@ -266,6 +266,78 @@ public:
         else return (*this);
     }
 
+    // pow(a,b): a的b次方，只支持b为正整数，采用快速幂算法
+    friend bigint pow(bigint a, bigint b){
+        if(b.isneg()){
+            std::cerr << "Bigint Error! Cannot calculate negative exponent in pow()";
+            return 0;
+        }
+        bigint ans(1);
+        while(!b.iszero()){
+            if(b%2==1) ans = ans * a;
+            a = a * a;
+            b = b / 2;
+        }
+        return ans;
+    }
+
+    // bigFactorial(n): n的阶乘
+    friend bigint bigFactorial(const bigint &n){
+        if(n.isneg()){
+            std::cerr << "Bigint Error! Cannot calculate negative fractorial.";
+            return 0;
+        }
+        bigint ans(1), a(n);
+        while(!a.iszero()){
+            ans = ans * a;
+            a = a - 1;
+        }
+        return ans;
+    }
+
+    // sqrt(a): 平方根(向下取整)
+    friend bigint sqrt(const bigint &a){
+        if(a.isneg()){
+            std::cerr << "Bigint Error! Cannot calculate negative square root.";
+            return 0;
+        }
+        bigint l=0, r=a, mid;
+        while(l<=r){
+            mid = (l+r)/2;
+            if(mid*mid<=a) l=mid+1;
+            else r=mid-1;
+        }
+        return r;
+    }
+
+    // downpow(n,k): 下降幂，即 n(n-1)...(n-k+1)
+    friend bigint downpow(const bigint &n, const int &k){
+        if(k<0){
+            std::cerr << "Bigint Error! Cannot calculate negative exponent in downpow()";
+            return 0;
+        }
+        bigint ans(1), a(n);
+        for(int i = 0; i < k; i++){
+            ans = ans * a;
+            a = a - 1;
+        }
+        return ans;
+    }
+
+    // uppow(n,k): 上升幂，即 n(n+1)...(n+k-1)
+    friend bigint uppow(const bigint &n, const int &k){
+        if(k<0){
+            std::cerr << "Bigint Error! Cannot calculate negative exponent in uppow()";
+            return 0;
+        }
+        bigint ans(1), a(n);
+        for(int i = 0; i < k; i++){
+            ans = ans * a;
+            a = a + 1;
+        }
+        return ans;
+    }
+
     // 比较运算
     bool operator == (const bigint &b) const{
         bigint c = (*this) - b;
