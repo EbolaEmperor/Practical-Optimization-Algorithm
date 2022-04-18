@@ -61,6 +61,7 @@ public:
         return *this;
     }
 
+    // 矩阵基本运算
     fraction & element(const int &i, const int &j){
         return a[i*m+j];
     }
@@ -165,16 +166,21 @@ public:
             std::swap(a[i*m+r1], a[i*m+r2]);
     }
 
+    // 矩阵常用算法
     friend fracMatrix solve(fracMatrix A, fracMatrix b){
-        if(A.m!=A.n || A.m!=b.n){
-            std::cerr << "fracMatrix Error! Undefined equation!" << std::endl;
-            exit(-1);
+        if(A.m!=A.n || A.n!=b.n || A.m==0){
+            std::cerr << "fracMatrix Error! The method solve() cannot solve an ill-posed equation!" << std::endl;
+            return fracMatrix();
         }
         int n = A.n;
         fracMatrix x(n,1);
         for(int i = 0; i < n; i++){
             int p = i;
             while(p<n && A.element(p,i)==0) p++;
+            if(p==n){
+                std::cerr << "fracMatrix Error! The method solve() cannot solve an singular equation!" << std::endl;
+                return fracMatrix();
+            }
             if(p!=i) A.swaprow(i,p);
             for(int j = 0; j < n; j++){
                 if(i==j) continue;
@@ -188,6 +194,66 @@ public:
             x.element(i,0) = b.element(i,0)/A.element(i,i);
         return x;
     }
+
+    fracMatrix inverse(){
+        if(m!=n || m==0){
+            std::cerr << "fracMatrix Error! There's no inverse of a non-square or empty matrix!" << std::endl;
+            return fracMatrix();
+        }
+        fracMatrix A(n,2*n);
+        for(int i = 0; i < n; i++)
+        {
+            A.element(i,i+n) = 1;
+            for(int j = 0; j < n; j++)
+                A.element(i,j) = element(i,j);
+        }
+        for(int i = 0; i < n; i++){
+            int p = i;
+            while(p<n && A.element(p,i)==0) p++;
+            if(p==n){
+                std::cerr << "fracMatrix Error! There's no inverse of a singular matrix!" << std::endl;
+                return fracMatrix();
+            }
+            if(p!=i) A.swaprow(i,p);
+            for(int k = i+1; k < 2*n; k++)
+                A.element(i,k) /= A.element(i,i);
+            A.element(i,i) = 1;
+            for(int j = 0; j < n; j++){
+                if(i==j) continue;
+                fraction coef = A.element(j,i);
+                for(int k = i; k < 2*n; k++)
+                    A.element(j,k) -= A.element(i,k)*coef;
+            }
+        }
+        fracMatrix ans(n,n);
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++)
+                ans.element(i,j) = A.element(i,j+n);
+        return ans;
+    }
+
+    fraction det(){
+        if(m!=n || m==0){
+            std::cerr << "fracMatrix Error! Cannot calculate the determinate of a non-square or empty matrix!" << std::endl;
+            return 0;
+        }
+        fracMatrix A(*this);
+        fraction ans = 1;
+        for(int i = 0; i < n; i++){
+            int p = i;
+            while(p<n && A.element(p,i)==0) p++;
+            if(p==n) return 0;
+            if(p!=i) A.swaprow(i,p);
+            ans *= A.element(i,i);
+            for(int j = i+1; j < n; j++){
+                fraction coef = A.element(j,i)/A.element(i,i);
+                for(int k = i; k < n; k++)
+                    A.element(j,k) -= A.element(i,k)*coef;
+            }
+        }
+        return ans;
+    }
+
 };
 
 fracMatrix hilbert(const int &n){
