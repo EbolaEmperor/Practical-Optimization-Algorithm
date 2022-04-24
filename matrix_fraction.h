@@ -166,6 +166,14 @@ public:
             std::swap(a[i*m+r1], a[i*m+r2]);
     }
 
+    fraction sum() const{
+        fraction s = 0;
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < m; j++)
+                s += element(i,j);
+        return s;
+    }
+
     // 矩阵常用算法
     friend fracMatrix solve(fracMatrix A, fracMatrix b){
         if(A.m!=A.n || A.n!=b.n || A.m==0){
