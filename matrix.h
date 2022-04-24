@@ -185,7 +185,8 @@ public:
             out << "[ " << A[i][0];
             for(int j = 1; j < A.m; j++)
                 out << ", " << A[i][j];
-            out << " ]" << std::endl;
+            out << " ]";
+            if(i < A.n-1) out << std::endl;
         }
         return out;
     }
@@ -208,7 +209,40 @@ public:
             std::swap(a[i*m+r1], a[i*m+r2]);
     }
 
-    // 解方程Ax=b，算法为列主元法Gauss消元
+    // 向量对应元素相除除，用法：x = dotdiv(a,b)
+    friend Matrix dotdiv(const Matrix &a, const Matrix &b){
+        Matrix x = a;
+        for(int i = 0; i < a.n; i++)
+            for(int j = 0; j < a.m; j++)
+                x[i][j] /= b[i][j];
+        return x;
+    }
+
+    // 解下三角方程，用法：x = solveLowerTriangular(A,b)
+    friend Matrix solveLowerTriangular(const Matrix &A, const Matrix &b){
+        Matrix x = b;
+        int n = A.n;
+        for(int i = 0; i < n; i++){
+            x[i][0] /= A[i][i];
+            for(int j = i+1; j < n; j++)
+                x[j][0] -= x[i][0] * A[j][i];
+        }
+        return x;
+    }
+
+    // 解上三角方程，用法：x = solveUpperTriangular(A,b)
+    friend Matrix solveUpperTriangular(const Matrix &A, const Matrix &b){
+        Matrix x = b;
+        int n = A.n;
+        for(int i = n-1; i >= 0; i--){
+            x[i][0] /= A[i][i];
+            for(int j = 0; j < i; j++)
+                x[j][0] -= x[i][0] * A[j][i];
+        }
+        return x;
+    }
+
+    // 解方程Ax=b，算法为列主元法Gauss消元，用法：x = solve(A,b)
     friend Matrix solve(Matrix A, Matrix b){
         if(A.m!=A.n || A.n!=b.n || A.m==0){
             std::cerr << "Matrix Error! The method solve() cannot solve an ill-posed equation!" << std::endl;
@@ -236,6 +270,40 @@ public:
         for(int i = 0; i < n; i++)
             x[i][0] = b[i][0]/A[i][i];
         return x;
+    }
+
+    // 改进Cholesky分解（LDL分解），用法：L=choleskyImproved(A)，D的元素存储在L的对角线上
+    friend Matrix choleskyImproved(const Matrix &A){
+        if(A.m!=A.n || A.m==0){
+            std::cerr << "Matrix Error! The method cholesky() cannot apply on a non-square or empty matrix!" << std::endl;
+            return Matrix();
+        }
+        int n = A.n;
+        Matrix L(n, n);
+        for(int j = 0; j < n; j++)
+        {
+            L[j][j] = A[j][j];
+            for(int k = 0; k < j; k++)
+                L[j][j] -= L[j][k]*L[k][k]*L[j][k];
+            for(int i = j+1; i < n; i++)
+            {
+                L[i][j] = A[i][j];
+                for(int k = 0; k < j; k++)
+                    L[i][j] -= L[i][k]*L[k][k]*L[j][k];
+                L[i][j] /= L[j][j];
+            }
+        }
+        return L;
+    }
+
+    // 用改进Cholesky方法求解正定对称方程，用法：x = solveByLDL(A,b)
+    friend Matrix solveByLDL(const Matrix &A, const Matrix &b){
+        Matrix L = choleskyImproved(A);
+        Matrix D = diag(L);
+        L = L - diag(D) + eye(L.n);
+        Matrix y = solveLowerTriangular(L, b);
+        y = dotdiv(y,D);
+        return solveUpperTriangular(L.T(), y);
     }
 
     // Gill-Murray修正Cholesky分解
