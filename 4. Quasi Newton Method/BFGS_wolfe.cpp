@@ -72,7 +72,7 @@ Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*y)) * (y*y.T());
+        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
     cout << "Total Steps: " << step << endl;
     return current;
@@ -104,7 +104,7 @@ int main(){
     Matrix x(n,1);
     for(int i = 0; i < n; i++)
         x[i][0] = (i&1) ? 1 : -1.2;
-    x = bfgs(f, grad, n, x, 1e-5, 0.3, 0.6);
+    x = bfgs(f, grad, n, x, 1e-5, 0.1, 0.4);
     cout << "min f = f(" << x.T() << ") = " << f(x) << endl;
     return 0;
 }
