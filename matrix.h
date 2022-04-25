@@ -179,6 +179,34 @@ public:
         return pow(norm, 1.0/p);
     }
 
+    // 将矩阵中所有元素取绝对值后返回，用法：B=abs(A)
+    friend Matrix abs(const Matrix &A){
+        Matrix C = A;
+        for(int i = 0; i < A.n; i++)
+            for(int j = 0; j < A.m; j++)
+                C[i][j] = std::fabs(A[i][j]);
+        return C;
+    }
+
+    // 矩阵求最大值函数，返回矩阵中的最大元素，用法：x=max(A)
+    friend double max(const Matrix &A){
+        if(A.m==0 || A.n==0) return 0;
+        double res = A[0][0];
+        for(int i = 0; i < A.n; i++)
+            for(int j = 0; j < A.m; j++)
+                res = std::max(res, A[i][j]);
+        return res;
+    }
+
+    // 矩阵求和函数，返回所有元素的和，用法：s=sum(A)
+    friend double sum(const Matrix &A){
+        double res = 0;
+        for(int i = 0; i < A.n; i++)
+            for(int j = 0; j < A.m; j++)
+                res += A[i][j];
+        return res;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const Matrix &A){
         for(int i = 0; i < A.n; i++)
         {
@@ -307,42 +335,58 @@ public:
     }
 
     // Gill-Murray修正Cholesky分解
-    void gillMurray(Matrix &L, Matrix &D, Matrix &E) const{
-        if(m!=n || n==0){
+    friend Matrix gillMurray(Matrix A){
+        if(A.m!=A.n || A.n==0){
             std::cerr << "Matrix Error! The method gillMurray() cannot apply on a non-square or empty matrix!" << std::endl;
             exit(-1);
         }
-        Matrix G(*this);
-        double gamma = 0, xi = 0;
+        using std::max;
+        int n = A.n;
+        double gamma=0, xi=0;
         for(int i = 0; i < n; i++)
-            for(int j = 0; j < n; j++)
-                if(i==j) gamma = std::max(gamma, fabs(a[i*m+j]));
-                else xi = std::max(xi, fabs(a[i*m+j]));
-        double nu = std::max(1.0, sqrt(n*n-1));
-        double beta2 = std::max(std::max(gamma,xi/nu),1e-6);
+        {
+            gamma = max(gamma, fabs(A[i][i]));
+            for(int j = 0; j < i; j++)
+                xi = max(xi, fabs(A[i][j]));
+        }
+        double nu = max(1.0, sqrt(n*n-1));
+        double beta2 = max(max(gamma,xi/nu),1e-6);
         Matrix c(n,n);
         for(int i = 0; i < n; i++)
-            c[i][i] = a[i*m+i];
-        L = eye(n);
-        D = zeros(1,n);
-        E = zeros(1,n);
-        for(int j = 0; j < n; j++){
+            c[i][i] = A[i][i];
+        Matrix L(n,n);
+        for(int j = 0; j < n; j++)
+        {
             int q = j;
             for(int k = j+1; k < n; k++)
                 if(fabs(c[k][k])>fabs(c[q][q])) q = k;
-            if(j!=q) G.swaprow(j,q), G.swapcol(j,q);
+            if(j!=q) A.swapcol(j,q), A.swaprow(j,q);
             for(int k = 0; k < j; k++)
-                L[j][k] = c[j][k]/D[0][k];
-            if(j==0) c.setSubmatrix(j+1,j, G.getSubmatrix(j+1,n-1,j,j));
-            else if(j<n-1) c.setSubmatrix(j+1,j, G.getSubmatrix(j+1,n-1,j,j) - c.getSubmatrix(j+1,n-1,0,j-1) * L.getSubmatrix(j,j,0,j-1).T() );
+                L[j][k] = c[j][k]/L[k][k];
+            for(int i = j+1; i < n; i++)
+            {
+                c[i][j] = A[i][j];
+                for(int k = 0; k < j; k++)
+                    c[i][j] -= c[i][k]*L[j][k];
+            }
             double theta = 0;
             for(int k = j+1; k < n; k++)
-                theta = std::max(theta, fabs(c[k][j]));
-            D[0][j] = std::max(1e-3, std::max(fabs(c[j][j]), theta*theta/beta2));
-            E[0][j] = D[0][j] - c[j][j];
+                theta = max(theta, fabs(c[k][j]));
+            L[j][j] = max(max(fabs(c[j][j]),theta*theta/beta2),1e-3);
             for(int i = j+1; i < n; i++)
-                c[i][i] -= c[i][j]*c[i][j]/D[0][j];
+                c[i][i] -= c[i][j]*c[i][j]/L[j][j];
         }
+        return L;
+    }
+
+    // 用Gill-Murray修正Cholesky方法求解正定对称方程，用法：x = solveByLDL_GM(A,b)
+    friend Matrix solveByLDL_GM(const Matrix &A, const Matrix &b){
+        Matrix L = gillMurray(A);
+        Matrix D = diag(L);
+        L = L - diag(D) + eye(L.n);
+        Matrix y = solveLowerTriangular(L, b);
+        y = dotdiv(y,D);
+        return solveUpperTriangular(L.T(), y);
     }
 };
 
