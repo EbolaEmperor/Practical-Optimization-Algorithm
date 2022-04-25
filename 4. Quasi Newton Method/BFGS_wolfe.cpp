@@ -64,13 +64,14 @@ Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int
     Matrix H = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
+        step++;
         Matrix direction = -(H*grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma);
         Matrix s = alpha*direction;
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
-        //cout << "Step: " << ++step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
+        cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         H = ( eye(n) - (1.0/value(s.T()*y))*(s*y.T()) ) * H * ( eye(n) - (1.0/value(s.T()*y))*(y*s.T()) ) + (1.0/value(s.T()*y))*(s*s.T());
     }
     cout << "Total Steps: " << step << endl;
