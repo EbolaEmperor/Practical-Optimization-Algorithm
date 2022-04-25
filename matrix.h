@@ -300,6 +300,34 @@ public:
         return x;
     }
 
+    // 返回矩阵的行列式，用高斯消元法计算。用法：d=A.det()
+    double det() const{
+        if(m!=n || m==0){
+            std::cerr << "fracMatrix Error! Cannot calculate the determinate of a non-square or empty matrix!" << std::endl;
+            return 0;
+        }
+        Matrix A(*this);
+        double ans = 1;
+        for(int i = 0; i < n; i++){
+            int p = i;
+            while(p<n && A[p][i]==0) p++;
+            if(p==n) return 0;
+            if(p!=i) A.swaprow(i,p);
+            ans *= A[i][i];
+            for(int j = i+1; j < n; j++){
+                double coef = A[j][i]/A[i][i];
+                for(int k = i; k < n; k++)
+                    A[j][k] -= A[i][k]*coef;
+            }
+        }
+        return ans;
+    }
+
+    // 返回矩阵的行列式，只是提供A.det()方法的另一种调用方式。用法：d=det(A)
+    friend double det(const Matrix &A){
+        return A.det();
+    }
+
     // 改进Cholesky分解（LDL分解），用法：L=choleskyImproved(A)，D的元素存储在L的对角线上
     friend Matrix choleskyImproved(const Matrix &A){
         if(A.m!=A.n || A.m==0){
