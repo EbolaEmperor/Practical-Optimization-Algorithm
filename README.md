@@ -21,9 +21,11 @@
   - 精确共轭梯度法
   - 预优共轭梯度法
 - 4.拟牛顿法
-  - 采用简单准则的BFGS方法
-  - 采用Wolfe准则的BFGS方法
-  - 采用Goldestein准则的BFGS方法（通常不使用）
+  - 采用简单准则的BFGS校正法
+  - 采用Wolfe准则的BFGS校正法（表现最好）
+  - 采用Goldestein准则的BFGS校正法（通常不使用）
+  - 采用Wolfe准则的DFP校正法
+  - 采用Wolfe准则的Broyden族校正法
 
 ### 一些说明
 
