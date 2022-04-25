@@ -10,6 +10,8 @@
 - 1.线搜索
   - Fibonacci分割法
   - Newton单点插值法
+  - Armijo-Goldstein不精确线搜索法
+  - Wolfe-Powell不精确线搜索法
 - 2.最速下降法与牛顿法
   - 最速下降法
   - 牛顿法
@@ -19,7 +21,8 @@
   - 精确共轭梯度法
   - 预优共轭梯度法
 - 4.拟牛顿法
-  - BFGS方法
+  - 采用Wolfe准则的BFGS方法
+  - 采用Goldestein准则的BFGS方法（通常不使用）
 
 ### 一些说明
 

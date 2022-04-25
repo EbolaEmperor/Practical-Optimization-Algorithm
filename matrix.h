@@ -7,12 +7,12 @@
  *
  **************************************************************/
 
+#ifndef _MATRIX_H_
+#define _MATRIX_H_
+
 #include <iostream>
 #include <cstring>
 #include <cmath>
-
-#ifndef _MATRIX_H_
-#define _MATRIX_H_
 
 class Matrix;
 
@@ -153,7 +153,7 @@ public:
 
     Matrix operator * (const Matrix &B) const{
         if(m!=B.n){
-            std::cerr << "Matrix Error! Undefined multiplication!" << std::endl;
+            std::cerr << "Matrix Error! Undefined multiplication! (" << n << "*" << m << ") * (" << B.n << "*" << B.m << ")" << std::endl;
             exit(-1);
         }
         Matrix C(n, B.m);
