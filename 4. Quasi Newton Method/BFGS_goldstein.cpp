@@ -6,7 +6,7 @@
  * 返回值是BFGS方法求得的最小值点
  * f和grad的定义方法参照本例程
  * 
- * 注意：本程序的一维搜索采用Goldstein准则，一般是不会使用的，因为BFGS算法的全局收敛性需要Wolfe准则才能保证
+ * 注：本程序的一维搜索采用Goldstein准则
  * 
  * copyright © 2022 Wenchong Huang, All rights reserved.
  *
@@ -45,18 +45,18 @@ double armijo_goldstein(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&
 }
 
 Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int &n, Matrix current, const double err=1e-5, const double rho=0.4){
-    Matrix H = eye(n);
+    Matrix B = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
-        Matrix direction = -(H*grad(current));
+        Matrix direction = -solveByLDL(B,grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = armijo_goldstein(f,grad,current,direction,rho);
         Matrix s = alpha*direction;
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
-        cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        H = ( eye(n) - (1.0/value(s.T()*y))*(s*y.T()) ) * H * ( eye(n) - (1.0/value(s.T()*y))*(y*s.T()) ) + (1.0/value(s.T()*y))*(s*s.T());
+        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
+        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*y)) * (y*y.T());
     }
     cout << "Total Steps: " << step << endl;
     return current;

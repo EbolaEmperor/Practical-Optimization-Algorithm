@@ -6,7 +6,7 @@
  * 返回值是BFGS方法求得的最小值点
  * f和grad的定义方法参照本例程
  * 
- * 注意：本程序的一维搜索采用Wolfe准则，其全局收敛性已经被证明
+ * 注：本程序的一维搜索采用Wolfe准则，其全局收敛性已经被证明
  * 
  * copyright © 2022 Wenchong Huang, All rights reserved.
  *
@@ -60,19 +60,19 @@ double wolfe_powell(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), c
     return alpha;
 }
 
-Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int &n, Matrix current, const double err=1e-5, const double rho=0.4, const double sigma=0.7){
-    Matrix H = eye(n);
+Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int &n, Matrix current, const double err=1e-5, const double rho=0.3, const double sigma=0.6){
+    Matrix B = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
-        Matrix direction = -(H*grad(current));
+        Matrix direction = -solveByLDL(B,grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma);
         Matrix s = alpha*direction;
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
-        cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        H = ( eye(n) - (1.0/value(s.T()*y))*(s*y.T()) ) * H * ( eye(n) - (1.0/value(s.T()*y))*(y*s.T()) ) + (1.0/value(s.T()*y))*(s*s.T());
+        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
+        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*y)) * (y*y.T());
     }
     cout << "Total Steps: " << step << endl;
     return current;
@@ -104,7 +104,7 @@ int main(){
     Matrix x(n,1);
     for(int i = 0; i < n; i++)
         x[i][0] = (i&1) ? 1 : -1.2;
-    x = bfgs(f, grad, n, x, 1e-5, 0.3, 0.8);
+    x = bfgs(f, grad, n, x, 1e-5, 0.3, 0.6);
     cout << "min f = f(" << x.T() << ") = " << f(x) << endl;
     return 0;
 }
