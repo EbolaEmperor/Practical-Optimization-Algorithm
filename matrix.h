@@ -45,6 +45,12 @@ public:
             for(int j = 0; j < m; j++)
                 a[i*m+j] = A[i][j];
     }
+    Matrix(const double *p, const int &_n){
+        n = _n; m = 1;
+        a = new double[n];
+        for(int i = 0; i < n; i++)
+            a[i] = p[i];
+    }
     ~Matrix(){
         delete a;
     }
