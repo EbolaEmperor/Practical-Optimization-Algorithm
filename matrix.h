@@ -449,4 +449,34 @@ double value(const Matrix &A){
     return A[0][0];
 }
 
+double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const double err=1e-6){
+    const int n = x.n;
+    if(j<0 || j>=n){
+        std::cerr << "partial():: out of range" << std::endl;
+        return 0;
+    }
+    Matrix d(n,1);
+    d[j][0] = 1;
+    double alpha = 0.5;
+    double g1 = alpha*(f(x+d)-f(x-d)), g2 = g1+10*err;
+    int step = 0;
+    while(fabs(g2-g1)>err && ++step<50){
+        alpha *= 10;
+        d = 0.1 * d;
+        g2 = g1;
+        g1 = alpha*(f(x+d)-f(x-d));
+    }
+    if(step==50)
+        std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
+    return g1;
+}
+
+Matrix gradient(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6){
+    const int n = x.n;
+    Matrix g(n,1);
+    for(int i = 0; i < n; i++)
+        g[i][0] = partial(f, x, i, err);
+    return g;
+}
+
 #endif

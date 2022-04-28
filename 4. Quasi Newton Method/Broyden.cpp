@@ -1,8 +1,8 @@
 /********************************************************************************************************
  *
  * 这是一个Broyden族校正拟牛顿法的通用最优化程序，依赖于：matrix.h
- * 用法：sol=broyden(f,grad,n,x0,[phi],[err],[rho],[sigma])
- * 其中f是待求解函数，grad是待求解函数的梯度，n是函数的维数，x0是初始迭代位置，err是允许误差，rho,sigma是Wolfe准则中的参数
+ * 用法：sol=broyden(f,grad,x0,[phi],[err],[rho],[sigma])
+ * 其中f是待求解函数，grad是待求解函数的梯度，x0是初始迭代位置，err是允许误差，rho,sigma是Wolfe准则中的参数
  * phi是Broyden族校正中的重要参数，默认为1（即得BFGS校正），为0时就是DFP校正
  * 返回值是Broyden族校正方法求得的最小值点
  * f和grad的定义方法参照本例程
@@ -61,8 +61,9 @@ double wolfe_powell(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), c
     return alpha;
 }
 
-Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const int &n, Matrix current, 
+Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, 
                const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
+    const int n = current.n;
     Matrix B = eye(n), H = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
@@ -107,7 +108,7 @@ int main(){
     Matrix x(n,1);
     for(int i = 0; i < n; i++)
         x[i][0] = (i&1) ? 1 : -1.2;
-    x = broyden(f, grad, n, x, 0.8, 1e-5, 0.1, 0.4);
+    x = broyden(f, grad, x, 0.8, 1e-5, 0.1, 0.4);
     cout << "min f = f(" << x.T() << ") = " << f(x) << endl;
     return 0;
 }
