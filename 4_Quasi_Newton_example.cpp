@@ -9,9 +9,7 @@ using namespace rosenbrock;
 
 int main(){
     cin >> n;
-    Matrix x(n,1), y;
-    for(int i = 0; i < n; i++)
-        x[i][0] = (i&1) ? 1 : -1.2;
+    Matrix x=initial(), y;
 
     cout << "BFGS Method (with Wolfe)" << endl;
     y = bfgs(f, grad, x, 1e-5, 0.1, 0.4);

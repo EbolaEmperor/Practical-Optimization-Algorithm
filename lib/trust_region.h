@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iostream>
 
-Matrix dogleg(double (*f)(const Matrix&), const Matrix &g, const Matrix &B, const double &delta, const double err=1e-6){
+Matrix dogleg(double (*f)(const Matrix&), const Matrix &g, const Matrix &B, const double &delta){
     Matrix pB = -solveByLDL(B,g);
     Matrix pU = -value(g.T()*g)/value(g.T()*B*g)*g;
     Matrix pBU = pB - pU;
@@ -27,7 +27,7 @@ Matrix trust_region_gradfree(double (*f)(const Matrix&), Matrix current,
         Matrix g = gradient(f, current, 0.1*err);
         if(g.vecnorm(2)<err) break;
         Matrix B = hesse(f, current, 0.1*err);
-        Matrix s = dogleg(f, g, B, delta, 0.1*err);
+        Matrix s = dogleg(f, g, B, delta);
         double rho = (f(current+s)-f(current))/(value(g.T()*s)+0.5*value(s.T()*B*s));
         if(rho < 0.25)
             delta *= 0.25;
@@ -47,7 +47,7 @@ Matrix trust_region(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), M
         Matrix g = grad(current);
         if(g.vecnorm(2)<err) break;
         Matrix B = hessian(current);
-        Matrix s = dogleg(f, g, B, delta, 0.1*err);
+        Matrix s = dogleg(f, g, B, delta);
         double rho = (f(current+s)-f(current))/(value(g.T()*s)+0.5*value(s.T()*B*s));
         if(rho < 0.25)
             delta *= 0.25;
