@@ -1,7 +1,7 @@
 #ifndef _QUASSI_NEWTON_
 #define _QUASSI_NEWTON_
 
-#include "../matrix.h"
+#include "matrix.h"
 #include <cmath>
 #include <iostream>
 

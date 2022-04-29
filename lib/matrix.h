@@ -466,7 +466,7 @@ double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const 
     double alpha = 0.5;
     double g1 = alpha*(f(x+d)-f(x-d)), g2 = g1+10*err;
     int step = 0;
-    while(fabs(g2-g1)>err && ++step<10){
+    while(fabs(g2-g1)>err && ++step<12){
         alpha *= 10;
         d = 0.1 * d;
         g2 = g1;
