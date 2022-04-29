@@ -14,7 +14,6 @@ int main(){
     y = newton(rosenbrock::f, rosenbrock::grad, rosenbrock::hessian, rosenbrock::initial(), 1e-6);
     cout << "min f = (" << y.T() << ") = " << rosenbrock::f(y) << endl << endl;
 
-
     cout << "Newton Method With Wolfe Search" << endl;
     y = newton_wolfe(rosenbrock::f, rosenbrock::grad, rosenbrock::hessian, rosenbrock::initial(), 1e-6, 0.1, 0.3);
     cout << "min f = (" << y.T() << ") = " << rosenbrock::f(y) << endl << endl;
