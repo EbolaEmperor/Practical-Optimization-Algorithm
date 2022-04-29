@@ -26,6 +26,8 @@
   - 采用Goldestein准则的BFGS校正法（通常不使用）
   - 采用Wolfe准则的DFP校正法
   - 采用Wolfe准则的Broyden族校正法
+- 5.信赖域法
+  - 采用Dogleg方法的信赖域法
 
 ### 一些说明
 
