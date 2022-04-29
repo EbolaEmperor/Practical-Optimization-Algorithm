@@ -37,6 +37,15 @@ Matrix hessian(const Matrix &x){
     return h;
 }
 
+Matrix initial(){
+    Matrix x(n,1);
+    for(int i = 0; i < n; i += 2){
+        x[i][0] = -1.2;
+        if(i+1<n) x[i+1][0] = 1;
+    }
+    return x;
+}
+
 }
 
 #endif
