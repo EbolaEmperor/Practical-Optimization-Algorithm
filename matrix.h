@@ -466,7 +466,7 @@ double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const 
     double alpha = 0.5;
     double g1 = alpha*(f(x+d)-f(x-d)), g2 = g1+10*err;
     int step = 0;
-    while(fabs(g2-g1)>err && ++step<50){
+    while(fabs(g2-g1)>err && ++step<10){
         alpha *= 10;
         d = 0.1 * d;
         g2 = g1;
@@ -483,6 +483,41 @@ Matrix gradient(double (*f)(const Matrix&), const Matrix &x, const double err=1e
     for(int i = 0; i < n; i++)
         g[i][0] = partial(f, x, i, err);
     return g;
+}
+
+double partial2(double (*f)(const Matrix&), const Matrix &x, const int &i, const int &j, const double err=1e-6){
+    const int n = x.n;
+    if(j<0 || j>=n || i<0 || i>=n){
+        std::cerr << "partial():: out of range" << std::endl;
+        return 0;
+    }
+    Matrix d1(n,1), d2(n,1);
+    d1[i][0] = 1;
+    d2[j][0] = 1;
+    double alpha = 0.5;
+    double g1 = alpha*alpha*(f(x+d1+d2)+f(x-d1-d2)-f(x+d1-d2)-f(x-d1+d2)), g2 = g1+10*err;
+    int step = 0;
+    while(fabs(g2-g1)>err && ++step<5){
+        alpha *= 10;
+        d1 = 0.1 * d1;
+        d2 = 0.1 * d2;
+        g2 = g1;
+        g1 = alpha*alpha*(f(x+d1+d2)+f(x-d1-d2)-f(x+d1-d2)-f(x-d1+d2));
+    }
+    if(step==50)
+        std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
+    return g1;
+}
+
+Matrix hesse(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6){
+    const int n = x.n;
+    Matrix h(n,n);
+    for(int i = 0; i < n; i++){
+        h[i][i] = partial2(f, x, i, i, err);
+        for(int j = 0; j < i; j++)
+            h[j][i] = h[i][j] = partial2(f, x, i, j, err);
+    }
+    return h;
 }
 
 #endif
