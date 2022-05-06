@@ -19,9 +19,16 @@ Matrix J(const Matrix &x){
 }
 
 int main(){
-    Matrix x(2,1);
+    Matrix x(2,1), y;
     x[0][0] = 0.70; x[1][0] = -0.2;
-    Matrix y = nonlinlsq_LM(F, J, x, 1e-10, 0.3, 0.6, 2000);
+    
+    cout << "LM Method:" << endl;
+    y = nonlinlsq_LM(F, J, x, 1e-10, 0.3, 0.6, 2000);
+    cout << "min f = f(" << y.T() << ") = " << fval(y) << endl <<endl;
+
+    cout << "LM Method (gradfree):" << endl;
+    y = nonlinlsq_LM_gradfree(F, x, 1e-10, 0.3, 0.6, 2000);
     cout << "min f = f(" << y.T() << ") = " << fval(y) << endl;
+
     return 0;
 }
