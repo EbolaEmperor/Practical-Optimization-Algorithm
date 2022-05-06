@@ -472,7 +472,7 @@ double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const 
         g2 = g1;
         g1 = alpha*(f(x+d)-f(x-d));
     }
-    if(step==50)
+    if(step==12)
         std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
     return g1;
 }
@@ -504,7 +504,7 @@ double partial2(double (*f)(const Matrix&), const Matrix &x, const int &i, const
         g2 = g1;
         g1 = alpha*alpha*(f(x+d1+d2)+f(x-d1-d2)-f(x+d1-d2)-f(x-d1+d2));
     }
-    if(step==50)
+    if(step==5)
         std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
     return g1;
 }
@@ -516,6 +516,29 @@ Matrix hesse(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6)
         h[i][i] = partial2(f, x, i, i, err);
         for(int j = 0; j < i; j++)
             h[j][i] = h[i][j] = partial2(f, x, i, j, err);
+    }
+    return h;
+}
+
+Matrix jacobi(Matrix (*F)(const Matrix&), const Matrix &x, const double err=1e-6){
+    Matrix y0 = F(x);
+    const int n = x.n;
+    const int m = y0.n;
+    Matrix h(m,n);
+    for(int j = 0; j < n; j++){
+        Matrix d(n,1);
+        d[j][0] = 1;
+        double alpha = 0.5;
+        Matrix g1 = alpha*(F(x+d)-F(x-d));
+        double g2 = g1.vecnorm(2)+10*err;
+        int step = 0;
+        while(fabs(g2-g1.vecnorm(2))>err && ++step<12){
+            alpha *= 10;
+            d = 0.1 * d;
+            g2 = g1.vecnorm(2);
+            g1 = alpha*(F(x+d)-F(x-d));
+        }
+        h.setSubmatrix(0,j,g1);
     }
     return h;
 }
