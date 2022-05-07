@@ -2,6 +2,7 @@
 #define _LINEAR_SEARCH_
 
 #include "matrix.h"
+#include "derivation.h"
 #include <cmath>
 #include <iostream>
 
