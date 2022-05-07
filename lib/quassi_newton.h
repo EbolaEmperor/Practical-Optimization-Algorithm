@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "linear_search.h"
+#include "derivation.h"
 #include <cmath>
 #include <iostream>
 

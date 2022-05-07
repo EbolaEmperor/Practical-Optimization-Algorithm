@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "linear_search.h"
+#include "derivation.h"
 
 static Matrix (*curF)(const Matrix&);
 static Matrix (*curJ)(const Matrix&);

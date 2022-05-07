@@ -2,6 +2,7 @@
 #define _TRUST_REGION_
 
 #include "matrix.h"
+#include "derivation.h"
 #include <cmath>
 #include <iostream>
 
