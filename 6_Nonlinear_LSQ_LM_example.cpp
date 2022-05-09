@@ -24,7 +24,7 @@ int main(){
     
     cout << "LM Method:" << endl;
     y = nonlinlsq_LM(F, J, x, 1e-10, 0.3, 0.6, 2000);
-    cout << "min f = f(" << y.T() << ") = " << fval(y) << endl <<endl;
+    cout << "min f = f(" << y.T() << ") = " << fval(y) << endl << endl;
 
     cout << "LM Method (gradfree):" << endl;
     y = nonlinlsq_LM_gradfree(F, x, 1e-10, 0.3, 0.6, 2000);
