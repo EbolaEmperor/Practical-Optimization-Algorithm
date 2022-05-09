@@ -2,6 +2,8 @@
 #define _CONGUGATE_GRADIENT_
 
 #include "matrix.h"
+#include "linear_search.h"
+#include "derivation.h"
 #include <iostream>
 
 /***************************************************************
@@ -45,6 +47,64 @@ Matrix PCG(const Matrix &A, const Matrix &b, Matrix x, Matrix M, const double er
         y = solve(M,r);
         double beta = value(r.T()*y) / tmp;
         p = -y + beta*p;
+    }
+    std::cout << "Steps: " << step << std::endl;
+    return x;
+}
+
+/**************************************************************************
+ *
+ * 这是一个用FR非线性共轭梯度法的通用最优化程序
+ * 调用CG_FR(f,grad,x,err)即可，其中f为待优化函数，grad为梯度，x为初始迭代位置
+ *
+ **************************************************************************/
+Matrix CG_FR(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
+    Matrix g = grad(x);
+    Matrix d = -g;
+    int step = 0;
+    const int n = x.n;
+    while(g.vecnorm(2) >= err){
+        step++;
+        double alpha = wolfe_powell(f, grad, x, d, rho, sigma, 0.05*err);
+        x = x + alpha*d;
+        if(step % (n+1) == 0){
+            g = grad(x);
+            d = -g;
+        } else {
+            double tmp = value(g.T()*g);
+            g = grad(x);
+            double beta = value(g.T()*g) / tmp;
+            d = -g + beta * d;
+        }
+    }
+    std::cout << "Steps: " << step << std::endl;
+    return x;
+}
+
+/**************************************************************************
+ *
+ * 这是一个用FR非线性共轭梯度法的通用最优化程序，无需人工求导
+ * 调用CG_FR(f,grad,x,err)即可，其中f为待优化函数，grad为梯度，x为初始迭代位置
+ *
+ **************************************************************************/
+Matrix CG_FR_gradfree(double (*f)(const Matrix&), Matrix x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
+    Matrix g = gradient(f, x);
+    Matrix d = -g;
+    int step = 0;
+    const int n = x.n;
+    while(g.vecnorm(2) >= err){
+        step++;
+        double alpha = wolfe_powell_gradfree(f, x, d, rho, sigma, 0.05*err);
+        x = x + alpha*d;
+        if(step % (n+1) == 0){
+            g = gradient(f, x);
+            d = -g;
+        } else {
+            double tmp = value(g.T()*g);
+            g = gradient(f, x);
+            double beta = value(g.T()*g) / tmp;
+            d = -g + beta * d;
+        }
     }
     std::cout << "Steps: " << step << std::endl;
     return x;

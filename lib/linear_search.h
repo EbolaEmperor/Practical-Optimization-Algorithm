@@ -86,11 +86,11 @@ double simple_search(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), 
 }
 
 double zoom_gradfree(double (*f)(const Matrix&), const Matrix &initial, const Matrix & direction, 
-            double a, double b, const double rho, const double sigma){
+            double a, double b, const double rho, const double sigma, const double eps){
     double alpha, fa, ga;
     double f0 = f(initial), g0 = value(direction.T()*gradient(f, initial));
     int step = 0;
-    while(b-a>1e-8 && ++step<100){
+    while(b-a>eps && ++step<100){
         alpha = (a+b)/2;
         fa = f(initial + alpha*direction);
         if(fa > f0+rho*alpha*g0)
@@ -106,7 +106,7 @@ double zoom_gradfree(double (*f)(const Matrix&), const Matrix &initial, const Ma
 }
 
 double wolfe_powell_gradfree(double (*f)(const Matrix&), const Matrix &initial, const Matrix & direction, 
-                    const double rho=0.4, const double sigma=0.7){
+                    const double rho=0.4, const double sigma=0.7, const double eps = 1e-8){
 //  Wolfe-Powell不精确一维搜索方法；需要传入函数、导函数；Wolfe-Powell准则中的参数rho, sigma可选，默认0.4, 0.7；
     double a = 0, b = 1e3, alpha = 1;
     double f0 = f(initial), g0 = value(direction.T()*gradient(f, initial));
@@ -114,12 +114,12 @@ double wolfe_powell_gradfree(double (*f)(const Matrix&), const Matrix &initial, 
     while(++step<100){
         double fa = f(initial + alpha*direction);
         if(fa > f0+rho*alpha*g0)
-            return zoom_gradfree(f, initial, direction, a, alpha, rho, sigma);
+            return zoom_gradfree(f, initial, direction, a, alpha, rho, sigma, eps);
         double ga = value(direction.T()*gradient(f, initial+alpha*direction));
         if(fabs(ga) <= -sigma*g0)
             return alpha;
         if(ga >= 0)
-            return zoom_gradfree(f, initial, direction, a, alpha, rho, sigma);
+            return zoom_gradfree(f, initial, direction, a, alpha, rho, sigma, eps);
         a = alpha;
         alpha = (a+b)/2;
     }
