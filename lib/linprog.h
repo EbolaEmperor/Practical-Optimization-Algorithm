@@ -125,8 +125,16 @@ Matrix linprog(const Matrix &c, const Matrix &A1, const Matrix &b1, const Matrix
  *      l <= x <= u
  * 使用方法： sol = linprog(c,A1,b1,A2,b2,l,u)，返回值为最优点，无解将会返回空向量
 ********************************************************************************/
-Matrix linprog(const Matrix &c, const Matrix &A, const Matrix &b, const Matrix &A2, const Matrix &b2, const Matrix &l, const Matrix &u){
-
+Matrix linprog(const Matrix &c, const Matrix &A1, const Matrix &b1, const Matrix &A2, const Matrix &b2, const Matrix &l, const Matrix &u){
+    Matrix _A1(A1.n+2*A1.m, A1.m);
+    _A1.setSubmatrix(0, 0, A1);
+    _A1.setSubmatrix(A1.n, 0, eye(A1.m));
+    _A1.setSubmatrix(A1.n+A1.m, 0, -eye(A1.m));
+    Matrix _b1(A1.n+2*A1.m, 1);
+    _b1.setSubmatrix(0, 0, b1);
+    _b1.setSubmatrix(A1.n, 0, u);
+    _b1.setSubmatrix(A1.n+A1.m, 0, -l);
+    return linprog(c, _A1, _b1, A2, b2);
 }
 
 #endif
