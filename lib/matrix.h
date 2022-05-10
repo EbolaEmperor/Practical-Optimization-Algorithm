@@ -57,7 +57,7 @@ public:
             a[i] = p[i];
     }
     ~Matrix(){
-        delete a;
+        delete [] a;
     }
     bool empty() const{
         return n==0 || m==0;
