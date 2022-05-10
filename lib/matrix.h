@@ -31,6 +31,11 @@ public:
         n = m = 0;
         a = nullptr;
     }
+    Matrix(const int &_n){
+        n = m = _n;
+        a = new double[n*m];
+        memset(a, 0, sizeof(double)*(n*m));
+    }
     Matrix(const int &_n, const int &_m){
         n = _n;
         m = _m;
@@ -211,6 +216,13 @@ public:
             for(int j = 0; j < A.m; j++)
                 res += A[i][j];
         return res;
+    }
+
+    friend std::istream& operator >> (std::istream& in, Matrix &A){
+        for(int i = 0; i < A.n; i++)
+            for(int j = 0; j < A.m; j++)
+                in >> A[i][j];
+        return in;
     }
 
     friend std::ostream& operator << (std::ostream& out, const Matrix &A){
