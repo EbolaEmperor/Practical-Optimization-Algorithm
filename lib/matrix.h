@@ -59,6 +59,9 @@ public:
     ~Matrix(){
         delete a;
     }
+    bool empty() const{
+        return n==0 || m==0;
+    }
 
     Matrix & operator = (const Matrix & rhs){
         Matrix copy(rhs);
