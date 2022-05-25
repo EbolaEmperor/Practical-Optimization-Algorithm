@@ -4,15 +4,16 @@
 #include <iostream>
 #include "linear_search.h"
 #include "matrix.h"
+#include "derivation.h"
 
-/*****************************************************************
+/*********************************************************************************
  *
  * 这是一个纯牛顿法的通用最优化程序
- * 用法： x = newton(f,grad,hessian,[eps])
- * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，eps是收敛精度
+ * 用法： x = newton(f,grad,hessian,x0,[eps])
+ * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，x0是初始位置，eps是收敛精度
  * 注意：牛顿法只适用于Hessian矩阵正定的函数
  *
- ****************************************************************/
+ **********************************************************************************/
 Matrix newton(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix (*hessian)(const Matrix&), Matrix current, const double eps=1e-5){
     int step = 0;
     while(grad(current).vecnorm(2)>eps){
@@ -26,11 +27,35 @@ Matrix newton(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix 
     return current;
 }
 
+/*****************************************************************
+ *
+ * 这是一个纯牛顿法的通用最优化程序，无需人工求导
+ * 用法： x = newton_gradfree(f,x0,[eps])
+ * 其中f是原函数，x0是初始位置，eps是收敛精度
+ * 注意：牛顿法只适用于Hessian矩阵正定的函数
+ *
+ ****************************************************************/
+Matrix newton_gradfree(double (*f)(const Matrix&), Matrix current, const double eps=1e-5){
+    int step = 0;
+    while(1){
+        step++;
+        Matrix grad = gradient(f, current);
+        if(grad.vecnorm(2)<=eps) break;
+        Matrix searchDirection = solveByLDL(hesse(f,current), -grad);
+        current = current + searchDirection;
+#ifdef debug
+        std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
+#endif
+    }
+    std::cout << "Total steps: " << step << std::endl;
+    return current;
+}
+
 /*******************************************************************************************
  *
  * 这是一个带Wolfe不精确搜索的牛顿法通用最优化程序
- * 用法： x = newton_wolfe(f,grad,hessian,[eps],[rho],[sigma])
- * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，eps是收敛精度，rho和sigma是Wolfe准则的参数
+ * 用法： x = newton_wolfe(f,grad,hessian,x0,[eps],[rho],[sigma])
+ * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，x0是初始位置，eps是收敛精度，rho和sigma是Wolfe准则的参数
  * 注意：牛顿法只适用于Hessian矩阵正定的函数
  *
  ******************************************************************************************/

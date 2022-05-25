@@ -43,6 +43,9 @@ Matrix nonlinlsq_LM(Matrix (*F)(const Matrix&), Matrix (*J)(const Matrix&), Matr
         if(grad.vecnorm(2) < err) break;
         Matrix Jk = J(current), Fk = F(current);
         Matrix direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
+#ifdef debug
+        std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << direct.T() << "    f=" << fval(current) << std::endl;
+#endif
         double alpha = wolfe_powell(fval, gradval, current, direct, rho, sigma, 0.05*err);
         double fval1 = fval(current);
         current = current + alpha*direct;
@@ -78,6 +81,9 @@ Matrix nonlinlsq_LM_gradfree(Matrix (*F)(const Matrix&), Matrix current, const d
         if(grad.vecnorm(2) < err) break;
         Matrix Jk = jacobi(F,current,0.05*err), Fk = F(current);
         Matrix direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
+#ifdef debug
+        std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << direct.T() << "    f=" << fval(current) << std::endl;
+#endif
         double alpha = wolfe_powell(fval, gradval_gradfree, current, direct, rho, sigma, 0.05*err);
         double fval1 = fval(current);
         current = current + alpha*direct;

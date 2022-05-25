@@ -22,8 +22,6 @@ double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const 
         g2 = g1;
         g1 = alpha*(f(x+d)-f(x-d));
     }
-    if(step==12)
-        std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
     return g1;
 }
 
@@ -54,8 +52,6 @@ double partial2(double (*f)(const Matrix&), const Matrix &x, const int &i, const
         g2 = g1;
         g1 = alpha*alpha*(f(x+d1+d2)+f(x-d1-d2)-f(x+d1-d2)-f(x-d1+d2));
     }
-    if(step==5)
-        std::cerr << "[Warning] partial:: The partial may not exist." << std::endl;
     return g1;
 }
 
