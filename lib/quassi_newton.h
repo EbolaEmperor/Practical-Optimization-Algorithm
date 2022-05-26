@@ -156,7 +156,7 @@ Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix
  * 返回值是BFGS方法求得的最小值点
  *
  ***********************************************************************************************/
-Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.3, const double sigma=0.6){
+Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
@@ -168,10 +168,14 @@ Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double er
         Matrix s = alpha*direction;
         Matrix y = gradient(f, current+s) - gradient(f, current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
+        if(step > MAXN) break;
+        //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << std::endl;
         B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
+#ifndef SILENCE
+    if(step>MAXN) std::cout << "Too many Steps!" << std::endl;
     std::cout << "Total Steps: " << step << std::endl;
+#endif
     return current;
 }
 
