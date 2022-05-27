@@ -56,6 +56,12 @@ public:
         for(int i = 0; i < n; i++)
             a[i] = p[i];
     }
+    Matrix(const int &_n, const int &_m, const double *p){
+        n = _n; m = _m;
+        a = new double[n*m];
+        for(int i = 0; i < n*m; i++)
+            a[i] = p[i];
+    }
     ~Matrix(){
         delete [] a;
     }
