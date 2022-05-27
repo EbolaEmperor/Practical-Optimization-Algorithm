@@ -487,6 +487,62 @@ public:
         y = dotdiv(y,D);
         return solveUpperTriangular(L.T(), y);
     }
+
+    // 返回矩阵的行最简形式，调用方式：H=A.rref()
+    Matrix rref() const{
+        Matrix A(*this);
+        int row = 0;
+        for(int i = 0; i < std::min(n,m); i++){
+            int p = row;
+            for(int j = row+1; j < n; j++)
+                if(fabs(A[j][i])>fabs(A[p][i])) p=j;
+            if(A[p][i]==0) continue;
+            if(p!=row) A.swaprow(row,p);
+            for(int k = i+1; k < m; k++)
+                A[row][k] /= A[row][i];
+            A[row][i] = 1;
+            for(int j = 0; j < n; j++){
+                if(j==row) continue;
+                double coef = A[j][i]/A[row][i];
+                for(int k = i; k < m; k++)
+                    A[j][k] -= A[row][k]*coef;
+            }
+            row++;
+        }
+        int r = 0;
+        while(r<n && A.getSubmatrix(r,r,0,m-1).vecnorm(2)>1e-10) r++;
+        return r ? A.getSubmatrix(0,r-1, 0, m-1) : Matrix();
+    }
+
+    // 求解满秩分解A=FG，用法：A.FGdecompose(F,G)
+    void FGdecompose(Matrix &F, Matrix &G) const{
+        G = rref();
+        F = Matrix(n, G.n);
+        int num = 0;
+        for(int i = 0; i < G.n; i++)
+            for(int j = i; j < G.m; j++)
+                if(G[i][j]==1){
+                    F.setSubmatrix(0,num,getSubmatrix(0,n-1,j,j));
+                    num++;
+                    break;
+                }
+    }
+
+    // 求解矩阵的M-P广义逆，调用方法：B=A.pinv()
+    Matrix pinv() const{
+        Matrix F,G;
+        FGdecompose(F,G);
+        std::cout << (*this) << std::endl << std::endl;
+        std::cout << F << std::endl << std::endl;
+        std::cout << G << std::endl << std::endl;
+        std::cout << F*G << std::endl << std::endl;
+        return G.T()*(G*G.T()).inv()*(F.T()*F).inv()*F.T();
+    }
+
+    // 求解矩阵M-P的广义逆，调用方法：B=pinv(A)，与B=A.pinv()等价
+    friend Matrix pinv(const Matrix &A){
+        return A.pinv();
+    }
 };
 
 Matrix hilbert(const int &n){
