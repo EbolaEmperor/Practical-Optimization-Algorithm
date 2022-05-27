@@ -349,6 +349,50 @@ public:
         return A.det();
     }
 
+    // 返回矩阵的逆矩阵，用列主元高斯消元法计算。用法：B=A.inv()
+    Matrix inv() const{
+        if(m!=n || m==0){
+            std::cerr << "Matrix Error! There's no inverse of a non-square or empty matrix!" << std::endl;
+            return Matrix();
+        }
+        Matrix A(n,2*n);
+        for(int i = 0; i < n; i++)
+        {
+            A[i][i+n] = 1;
+            for(int j = 0; j < n; j++)
+                A[i][j] = a[i*m+j];
+        }
+        for(int i = 0; i < n; i++){
+            int p = i;
+            for(int j = i+1; j < n; j++)
+                if(fabs(A[j][i])>fabs(A[p][i])) p=j;
+            if(A[p][i]==0){
+                std::cerr << "Matrix Error! There's no inverse of a singular matrix!" << std::endl;
+                return Matrix();
+            }
+            if(p!=i) A.swaprow(i,p);
+            for(int k = i+1; k < 2*n; k++)
+                A[i][k] /= A[i][i];
+            A[i][i] = 1;
+            for(int j = 0; j < n; j++){
+                if(i==j) continue;
+                double coef = A[j][i];
+                for(int k = i; k < 2*n; k++)
+                    A[j][k] -= A[i][k]*coef;
+            }
+        }
+        Matrix ans(n,n);
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++)
+                ans[i][j] = A[i][j+n];
+        return ans;
+    }
+
+    // 返回矩阵的逆矩阵，只是提供A.inv()方法的另一种调用方式。用法：B=inv(A)
+    friend Matrix inv(const Matrix &A){
+        return A.inv();
+    }
+
     // 改进Cholesky分解（LDL分解），用法：L=choleskyImproved(A)，D的元素存储在L的对角线上
     friend Matrix choleskyImproved(const Matrix &A){
         if(A.m!=A.n || A.m==0){
