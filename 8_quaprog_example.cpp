@@ -3,15 +3,15 @@
 #include <iostream>
 using namespace std;
 
-const double Hv[] = {3,-1,0,-1,2,-1,0,-1,1};
-const double cv[] = {1,1,1};
-const double Av[] = {1,2,1};
-const double bv[] = {4};
+const double Hv[] = {2,0,0,2};
+const double cv[] = {-2,-4};
+const double Aev[] = {};
+const double bev[] = {};
+const double Aiv[] = {-1,-1,1,0,0,1};
+const double biv[] = {-1,0,0};
 
 int main(){
-    Matrix H(3,3,Hv), c(3,1,cv), A(1,3,Av), b(1,1,bv);
-    Matrix sol = quaprog_equ(H,c,A,b);
-    cout << "sol=" << sol.T() << endl;
-    cout << "val=" << value(0.5*sol.T()*H*sol+c.T()*sol) << endl;
+    Matrix H(2,2,Hv), c(2,1,cv), Ae, be, Ai(3,2,Aiv), bi(3,1,biv), x0(2,1);
+    Matrix sol = quaprog(H,c,Ae,be,Ai,bi,x0);
     return 0;
 }
