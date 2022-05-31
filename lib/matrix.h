@@ -545,6 +545,8 @@ public:
     }
 
     friend Matrix mergeCol(const Matrix &A, const Matrix &B){
+        if(A.m == 0) return B;
+        if(B.m == 0) return A;
         if(A.n != B.n){
             std::cerr << "Cannot merge Matrices in column with different row size!" << std::endl;
             return Matrix();
@@ -556,6 +558,8 @@ public:
     }
 
     friend Matrix mergeRow(const Matrix &A, const Matrix &B){
+        if(A.n == 0) return B;
+        if(B.n == 0) return A;
         if(A.m != B.m){
             std::cerr << "Cannot merge Matrices in row with different column size!" << std::endl;
             return Matrix();
