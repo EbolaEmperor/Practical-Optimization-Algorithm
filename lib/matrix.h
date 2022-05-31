@@ -532,10 +532,6 @@ public:
     Matrix pinv() const{
         Matrix F,G;
         FGdecompose(F,G);
-        std::cout << (*this) << std::endl << std::endl;
-        std::cout << F << std::endl << std::endl;
-        std::cout << G << std::endl << std::endl;
-        std::cout << F*G << std::endl << std::endl;
         return G.T()*(G*G.T()).inv()*(F.T()*F).inv()*F.T();
     }
 
