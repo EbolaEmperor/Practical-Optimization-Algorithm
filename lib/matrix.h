@@ -543,6 +543,28 @@ public:
     friend Matrix pinv(const Matrix &A){
         return A.pinv();
     }
+
+    friend Matrix mergeCol(const Matrix &A, const Matrix &B){
+        if(A.n != B.n){
+            std::cerr << "Cannot merge Matrices in column with different row size!" << std::endl;
+            return Matrix();
+        }
+        Matrix C(A.n, A.m+B.m);
+        C.setSubmatrix(0,0,A);
+        C.setSubmatrix(0,A.m,B);
+        return C;
+    }
+
+    friend Matrix mergeRow(const Matrix &A, const Matrix &B){
+        if(A.m != B.m){
+            std::cerr << "Cannot merge Matrices in row with different column size!" << std::endl;
+            return Matrix();
+        }
+        Matrix C(A.n+B.n, A.m);
+        C.setSubmatrix(0,0,A);
+        C.setSubmatrix(A.n,0,B);
+        return C;
+    }
 };
 
 Matrix hilbert(const int &n){
