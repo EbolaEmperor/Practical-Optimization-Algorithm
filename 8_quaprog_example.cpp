@@ -10,7 +10,8 @@ void example1(){
     const double bev[] = {};
     const double Aiv[] = {-1,-1,1,0,0,1};
     const double biv[] = {-1,0,0};
-    Matrix H(2,2,Hv), c(2,1,cv), Ae, be, Ai(3,2,Aiv), bi(3,1,biv), x0(2,1);
+    Matrix H(2,2,Hv), Ae, Ai(3,2,Aiv);
+    ColVector c(2,cv), be, bi(3,biv), x0(2);
     Matrix sol = quaprog(H,c,Ae,be,Ai,bi,x0);
 }
 
@@ -21,7 +22,8 @@ void example2(){
     const double bev[] = {};
     const double Aiv[] = {-3,2,-5,2,-3,-2,1,0,0,0,1,0,0,0,1};
     const double biv[] = {-4,-3,0,0,0};
-    Matrix H(3,3,Hv), c(3,1,cv), Ae, be, Ai(5,3,Aiv), bi(5,1,biv), x0(3,1);
+    Matrix H(3,3,Hv), Ae, Ai(5,3,Aiv);
+    ColVector c(3,cv), be, bi(5,biv), x0(3);
     Matrix sol = quaprog(H,c,Ae,be,Ai,bi,x0);
 }
 
