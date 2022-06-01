@@ -44,7 +44,7 @@ int checkednum(const bool *p, int l, int r){
  * min.  1/2 x^THx + c^Tx
  * s.t.  Ae x = be,  Ai x >= bi
  * 另有参数x0为指定的初始可行点
- * 调用方法：sol=quaprog(H,c,Ae,be,Ai,bi,x0,[MAXN])
+ * 调用方法：sol=quaprog(H,c,Ae,be,Ai,bi,x0,[MAXN],[eps])
  * ****************************************************************/
 Matrix quaprog(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColVector &be, 
                const Matrix &Ai, const ColVector &bi, const ColVector &x0, const int MAXN=1000, const double eps=1e-10){
