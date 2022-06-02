@@ -689,7 +689,7 @@ Matrix min(const Matrix &A, const Matrix &B){
 // 返回一个矩阵C，使得C(i,j)=max(A(i,j),B(i,j))
 Matrix max(const Matrix &A, const Matrix &B){
     if(A.n!=B.n || A.m!=B.m){
-        std::cerr << "Cannot use min in two matrices of different size." << std::endl;
+        std::cerr << "Cannot use max in two matrices of different size." << std::endl;
         return Matrix();
     }
     Matrix C(A.n,A.m);
