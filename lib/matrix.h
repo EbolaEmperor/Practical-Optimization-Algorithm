@@ -63,6 +63,7 @@ public:
     Matrix rref() const;
     void FGdecompose(Matrix &F, Matrix &G) const;
     Matrix pinv() const;
+    double sqrsum() const;
 };
 
 class RowVector: public Matrix{
@@ -662,6 +663,14 @@ Matrix mergeRow(const Matrix &A, const Matrix &B){
     C.setSubmatrix(0,0,A);
     C.setSubmatrix(A.n,0,B);
     return C;
+}
+
+// 返回矩阵中所有元素的平方和
+double Matrix::sqrsum() const{
+    double res = 0;
+    for(int i = 0; i < n*m; i++)
+        res += a[i]*a[i];
+    return res;
 }
 
 //----------------------ColVector相关函数---------------------------
