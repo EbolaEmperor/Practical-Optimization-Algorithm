@@ -70,6 +70,7 @@ public:
     RowVector(): Matrix() {};
     RowVector(const int &n): Matrix(1,n) {};
     RowVector(const int &n, const double *p): Matrix(1,n,p) {};
+    RowVector(const Matrix &rhs);
     int size() const;
     const double operator [](const int &x) const;
     double & operator [] (const int &x);
@@ -84,6 +85,7 @@ public:
     ColVector(): Matrix() {};
     ColVector(const int &n): Matrix(n,1) {};
     ColVector(const int &n, const double *p): Matrix(n,1,p) {};
+    ColVector(const Matrix &rhs);
     int size() const;
     const double operator [](const int &x) const;
     double & operator [] (const int &x);
@@ -664,6 +666,17 @@ Matrix mergeRow(const Matrix &A, const Matrix &B){
 
 //----------------------ColVector相关函数---------------------------
 
+ColVector::ColVector(const Matrix &rhs){
+    if(rhs.m != 1){
+        std::cerr << "Error! Cannot convert a non sigle-column matrix into ColVector!" << std::endl;
+        ColVector();
+    } else {
+        ColVector(rhs.n);
+        for(int i = 0; i < n; i++)
+            (*this)[i] = rhs[i][0];
+    }
+}
+
 const double ColVector::operator [](const int &x) const{
     return element(x,0);
 }
@@ -733,6 +746,17 @@ RowVector ColVector::T() const{
 
 
 //----------------------RowVector相关函数---------------------------
+
+RowVector::RowVector(const Matrix &rhs){
+    if(rhs.n != 1){
+        std::cerr << "Error! Cannot convert a non sigle-row matrix into RowVector!" << std::endl;
+        RowVector();
+    } else {
+        RowVector(rhs.m);
+        for(int i = 0; i < m; i++)
+            (*this)[i] = rhs[0][i];
+    }
+}
 
 const double RowVector::operator [](const int &x) const{
     return element(0,x);
