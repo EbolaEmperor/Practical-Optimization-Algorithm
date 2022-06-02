@@ -704,9 +704,9 @@ Matrix max(const Matrix &A, const Matrix &B){
 ColVector::ColVector(const Matrix &rhs){
     if(rhs.m != 1){
         std::cerr << "Error! Cannot convert a non sigle-column matrix into ColVector!" << std::endl;
-        ColVector();
+        (*this) = ColVector();
     } else {
-        ColVector(rhs.n);
+        (*this) = ColVector(rhs.n);
         for(int i = 0; i < n; i++)
             (*this)[i] = rhs[i][0];
     }
@@ -785,9 +785,9 @@ RowVector ColVector::T() const{
 RowVector::RowVector(const Matrix &rhs){
     if(rhs.n != 1){
         std::cerr << "Error! Cannot convert a non sigle-row matrix into RowVector!" << std::endl;
-        RowVector();
+        (*this) = RowVector();
     } else {
-        RowVector(rhs.m);
+        (*this) = RowVector(rhs.m);
         for(int i = 0; i < m; i++)
             (*this)[i] = rhs[0][i];
     }
