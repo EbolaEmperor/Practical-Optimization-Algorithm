@@ -70,6 +70,7 @@ public:
     RowVector(): Matrix() {};
     RowVector(const int &n): Matrix(1,n) {};
     RowVector(const int &n, const double *p): Matrix(1,n,p) {};
+    int size() const;
     const double operator [](const int &x) const;
     double & operator [] (const int &x);
     RowVector operator + (const RowVector &rhs) const;
@@ -83,6 +84,7 @@ public:
     ColVector(): Matrix() {};
     ColVector(const int &n): Matrix(n,1) {};
     ColVector(const int &n, const double *p): Matrix(n,1,p) {};
+    int size() const;
     const double operator [](const int &x) const;
     double & operator [] (const int &x);
     ColVector operator + (const ColVector &rhs) const;
@@ -670,6 +672,10 @@ double & ColVector::operator [] (const int &x){
     return element(x,0);
 }
 
+int ColVector::size() const{
+    return n;
+}
+
 ColVector ColVector::operator + (const ColVector &rhs) const{
     if(n!=rhs.n){
         std::cerr << "ColVector Addition Error!" << std::endl;
@@ -734,6 +740,10 @@ const double RowVector::operator [](const int &x) const{
 
 double & RowVector::operator [] (const int &x){
     return element(0,x);
+}
+
+int RowVector::size() const{
+    return m;
 }
 
 RowVector operator * (const double &k, const RowVector &x){
