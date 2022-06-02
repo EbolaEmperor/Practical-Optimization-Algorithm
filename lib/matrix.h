@@ -686,6 +686,19 @@ Matrix min(const Matrix &A, const Matrix &B){
     return C;
 }
 
+// 返回一个矩阵C，使得C(i,j)=max(A(i,j),B(i,j))
+Matrix max(const Matrix &A, const Matrix &B){
+    if(A.n!=B.n || A.m!=B.m){
+        std::cerr << "Cannot use min in two matrices of different size." << std::endl;
+        return Matrix();
+    }
+    Matrix C(A.n,A.m);
+    for(int i = 0; i < C.n; i++)
+        for(int j = 0; j < C.m; j++)
+            C[i][j] = std::max(A[i][j],B[i][j]);
+    return C;
+}
+
 //----------------------ColVector相关函数---------------------------
 
 ColVector::ColVector(const Matrix &rhs){
