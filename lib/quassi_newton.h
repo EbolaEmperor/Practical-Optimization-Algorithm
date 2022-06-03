@@ -23,13 +23,16 @@ Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix cu
         step++;
         if(step>MAXN) break;
         Matrix direction = -solveByLDL(B,grad(current));
-        direction = (1.0/direction.vecnorm(2))*direction;
+        double norm = direction.vecnorm(2);
+        direction = (1.0/norm)*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma,0.05*err);
+        if(alpha < 0.1*err) alpha = norm;
         Matrix s = alpha*direction;
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
     std::cout << "BFGS Total Steps: " << step << std::endl;
     return current;
@@ -57,7 +60,8 @@ Matrix bfgs_goldstein(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&),
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -82,15 +86,16 @@ Matrix bfgs_simple(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Ma
         step++;
         if(step>MAXN) break;
         Matrix direction = -solveByLDL(B,grad(current));
-        direction = (1.0/direction.vecnorm(2))*direction;
+        //direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = simple_search(f,grad,current,direction,rho,sigma);
         Matrix s = alpha*direction;
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+    std::cout << "BFGS Total Steps: " << step << std::endl;
     return current;
 }
 
@@ -145,7 +150,8 @@ Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix
         Matrix y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
         H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*y)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
@@ -174,7 +180,8 @@ Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double er
         current = current + s;
         if(step > MAXN) break;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << std::endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
 #ifndef SILENCE
     if(step>MAXN) std::cout << "Too many Steps!" << std::endl;
@@ -204,7 +211,8 @@ Matrix bfgs_goldstein_gradfree(double (*f)(const Matrix&), Matrix current, const
         Matrix y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -260,7 +268,8 @@ Matrix broyden_gradfree(double (*f)(const Matrix&), Matrix current,
         Matrix y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << endl;
-        B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(value(y.T()*s)>0)
+            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
         H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*y)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;

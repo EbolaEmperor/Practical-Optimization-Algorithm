@@ -76,13 +76,13 @@ double simple_search(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), 
                     const double rho, const double sigma){
     int step = 0;
     double alpha = 1, f0 = f(initial), g0 = value(direction.T()*grad(initial));
-    while(++step < 50){
+    while(++step < 20){
         double fa = f(initial + alpha * direction);
         if(fa <= f0 + sigma * alpha * g0)
             return alpha;
         alpha = alpha * rho;
     }
-    return alpha;
+    return step==20 ? 1 : alpha;
 }
 
 double zoom_gradfree(double (*f)(const Matrix&), const Matrix &initial, const Matrix & direction, 
