@@ -39,6 +39,11 @@ Matrix Jg(const ColVector &x){
 
 int main(){
     ColVector x0 = 2*ones(3,1);
-    ColVector sol = general_constraint_optimal_PHR(f,h,g,gradf,Jh,Jg,x0);
+
+    // 自动求导版本
+    ColVector sol2 = general_constraint_optimal_PHR(f,h,g,x0);
+
+    // 人工求导版本
+    ColVector sol1 = general_constraint_optimal_PHR(f,h,g,gradf,Jh,Jg,x0);
     return 0;
 }

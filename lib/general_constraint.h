@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "quassi_newton.h"
+#include "derivation.h"
 #include <iostream>
 #include <cmath>
 
@@ -103,6 +104,62 @@ ColVector general_constraint_optimal_PHR(double (*f)(const ColVector &x), ColVec
 
 #ifndef SILENCE
     std::cerr << "---------- General Constraint Optimal PHR Method ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << x.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(x) << std::endl << std::endl;
+#endif
+    return x;
+}
+
+/*********************************************************************************
+ * 求解一般约束优化问题的PHR算法通用子程序. 用数值方法自动求导. 问题表述如下：
+ *   min. f(x)
+ *   s.t. h(x)=0, g(x)>=0
+ * 其中h,g是向量函数，大于号是针对每个分量而言的
+ * 
+ * 使用方法： sol=general_constraint_optimal_PHR(f,h,g,x0,[eps],[theta],[eta],[sigma],[MAXN])
+ * 必选参数：f,g,h含义见问题表述，x0是初始可行位置
+ * 可选参数：eps是精度，theta和eta是PHR算法的实参数，sigma是罚因子，MAXN是最大迭代次数
+ * *******************************************************************************/
+ColVector general_constraint_optimal_PHR(double (*f)(const ColVector &x), ColVector (*h)(const ColVector &x), ColVector (*g)(const ColVector &x), const ColVector &x0,
+    const double eps=1e-6, const double theta=0.8, const double eta=2.0, const double sigma0=2.0, const int MAXN=5000){
+    
+    // 初始化函数指针
+    lagrange::f = f;
+    lagrange::h = h;
+    lagrange::g = g;
+    lagrange::sigma = sigma0;
+    using lagrange::mu;
+    using lagrange::lambda;
+    using lagrange::sigma;
+
+    // 初始化迭代变量和乘子向量
+    ColVector xold=x0, x;
+    int n = x0.size();
+    int l = h(x0).size();
+    int m = g(x0).size();
+    mu = 0.1*ones(l,1);
+    lambda = 0.1*ones(m,1);
+    double betak=10, betaold=10; // 这两个值用于检验终止条件
+    int step=0;
+
+    // 开始PHR算法的迭代过程
+    for( ; betak>eps && step<MAXN; step++){
+        x = bfgs_gradfree(lagrange::psi, xold, eps, 0.3, 0.7, 1000);
+        ColVector hval=h(x), gval=g(x);
+        betak = sqrt( hval.sqrsum() + min(gval,(1.0/sigma)*lambda).sqrsum() );
+        if(betak>eps){
+            mu  = mu-sigma*hval;
+            lambda = max(zeroCol(m),lambda-sigma*gval);
+            if(step>=2 && betak>theta*betaold) sigma *= eta;
+        }
+        betaold = betak;
+        xold = x;
+    }
+
+#ifndef SILENCE
+    std::cerr << "---------- General Constraint Optimal PHR Method (gradfree) ----------" << std::endl;
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << x.T() << std::endl;

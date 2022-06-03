@@ -173,8 +173,10 @@ Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double er
     while(gradient(f, current).vecnorm(2) > err){
         step++;
         Matrix direction = -solveByLDL(B,gradient(f, current));
-        direction = (1.0/direction.vecnorm(2))*direction;
+        double norm = direction.vecnorm(2);
+        direction = (1.0/norm)*direction;
         double alpha = wolfe_powell_gradfree(f,current,direction,rho,sigma);
+        if(alpha < 0.1*err) alpha = norm;
         Matrix s = alpha*direction;
         Matrix y = gradient(f, current+s) - gradient(f, current);
         current = current + s;
@@ -185,7 +187,7 @@ Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double er
     }
 #ifndef SILENCE
     if(step>MAXN) std::cout << "Too many Steps!" << std::endl;
-    std::cout << "Total Steps: " << step << std::endl;
+    std::cout << "BFGS Total Steps: " << step << std::endl;
 #endif
     return current;
 }
