@@ -20,6 +20,7 @@ Matrix quaprog_equ(const Matrix &H, const Matrix &c, const Matrix &A, const Matr
     return B.T()*b-G*c;
 }
 
+// 此函数用于求解有效集方法中的等式约束二次规划子问题，不建议单独调用
 ColVector quaprog_subproblem(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColVector &be, ColVector &lambda){
     Matrix ginvH = pinv(H);
     if(Ae.n){
@@ -32,6 +33,7 @@ ColVector quaprog_subproblem(const Matrix &H, const ColVector &c, const Matrix &
     }
 }
 
+// 此函数用于统计p[l,...,r]中有多少个值为真
 int checkednum(const bool *p, int l, int r){
     int ans = 0;
     for(int i = l; i <= r; i++)
@@ -54,6 +56,7 @@ Matrix quaprog(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColV
     for(int i = 0; i < ni; i++)
         idx[i] = ( fabs(Ai.getRow(i)*x-bi[i])<=eps );
     for(; step <= MAXN; step++){
+        // 求解当前工作集对应的等式约束二次规划子问题
         Matrix Aee;
         if(ne) Aee = Ae;
         for(int j = 0; j < ni; j++)
@@ -71,26 +74,25 @@ Matrix quaprog(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColV
             double y = 0.0; int jk;
             if(lamk.n > ne)
                 for(int j = ne; j < lamk.n; j++)
-                    if(lamk[j]<y) y=lamk[j], jk=j;
+                    if(lamk[j]<y) y=lamk[j], jk=j;  //寻找最小的乘子
             if(y >= 0) break;
             for(int i = 0; i < ni; i++)
-                if(idx[i] && ne+checkednum(idx,0,i)==jk+1){
+                if(idx[i] && ne+checkednum(idx,0,i)==jk+1){  //将最小乘子对应的约束从工作集中移去
                     idx[i] = false;
                     break;
                 }
         } else {
-            int ti;
-            double alpha = 1.0, tm = 1.0;
+            int idxmin = -1;
+            double alpha = 1.0;
             for(int i = 0; i < ni; i++){
                 RowVector tmp = Ai.getRow(i);
                 if( !idx[i] && tmp*dk<0 ){
-                    double tm1 = (bi[i]-tmp*x)/(tmp*dk);
-                    if(tm1 < tm) tm = tm1, ti = i;
+                    double maxstep_i = (bi[i]-tmp*x)/(tmp*dk);
+                    if(maxstep_i < alpha) alpha = maxstep_i, idxmin = i;  //寻找搜索方向上约束最紧的条件
                 }
             }
-            alpha = std::min(alpha, tm);
             x = x + alpha*dk;
-            if(tm < 1) idx[ti] = true;
+            if(idxmin != -1) idx[idxmin] = true;  //到达约束最紧的条件的边界，将其加入工作集
         }
     }
 #ifndef SILENCE
