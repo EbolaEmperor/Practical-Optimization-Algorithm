@@ -62,6 +62,7 @@ Matrix quaprog(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColV
         int m = Aee.n;
         dk = quaprog_subproblem(H,gk,Aee,zeroCol(m),lamk);
 #ifdef DEBUG
+        std::cerr << "step = " << step << std::endl;
         std::cerr << "x = " << x.T() << std::endl;
         std::cerr << "dk = " << dk.T() << std::endl;
         std::cerr << "lamk = " << lamk.T() << std::endl << std::endl;
