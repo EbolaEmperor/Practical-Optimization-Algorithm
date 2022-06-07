@@ -55,8 +55,10 @@ Matrix nonlinlsq_LM(Matrix (*F)(const Matrix&), Matrix (*J)(const Matrix&), Matr
         if(r>0.75) mu *= 0.1;
         else if(r<0.25) mu *= 10;
     }
+#ifndef SILENCE
     std::cout << "Total Steps: " << step << std::endl;
     if(step==MAXN) std::cout << "Early Stop! The result might be unprecision." << std::endl;
+#endif
     return current;
 }
 
@@ -93,8 +95,10 @@ Matrix nonlinlsq_LM_gradfree(Matrix (*F)(const Matrix&), Matrix current, const d
         if(r>0.75) mu *= 0.1;
         else if(r<0.25) mu *= 10;
     }
+#ifndef SILENCE
     std::cout << "Total Steps: " << step << std::endl;
     if(step==MAXN) std::cout << "Early Stop! The result might be unprecision." << std::endl;
+#endif
     return current;
 }
 

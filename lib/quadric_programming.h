@@ -52,7 +52,7 @@ Matrix quaprog(const Matrix &H, const ColVector &c, const Matrix &Ae, const ColV
     int n = x.n, ne = be.n, ni = bi.n, step = 0;
     bool *idx = new bool[ni];
     for(int i = 0; i < ni; i++)
-        idx[i] = !( Ai.getRow(i)*x > bi[i]+eps );
+        idx[i] = ( fabs(Ai.getRow(i)*x-bi[i])<=eps );
     for(; step <= MAXN; step++){
         Matrix Aee;
         if(ne) Aee = Ae;
