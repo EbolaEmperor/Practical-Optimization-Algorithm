@@ -6,10 +6,10 @@
 #include <cmath>
 #include <iostream>
 
-double zoom(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const Matrix &initial, const Matrix & direction, 
+double zoom(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), const ColVector &initial, const ColVector & direction, 
             double a, double b, const double rho, const double sigma, const double eps=1e-8){
     double alpha, fa, ga;
-    double f0 = f(initial), g0 = value(direction.T()*grad(initial));
+    double f0 = f(initial), g0 = direction.T()*grad(initial);
     int step = 0;
     while(b-a>eps && ++step<100){
         alpha = (a+b)/2;
@@ -17,7 +17,7 @@ double zoom(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const Mat
         if(fa > f0+rho*alpha*g0)
             b = alpha;
         else{
-            ga = value(direction.T()*grad(initial+alpha*direction));
+            ga = direction.T()*grad(initial+alpha*direction);
             if(fabs(ga) <= -sigma*g0) return alpha;
             else if(ga*(b-a) >= 0) b = alpha;
             else a = alpha;
@@ -26,17 +26,17 @@ double zoom(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const Mat
     return alpha;
 }
 
-double wolfe_powell(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), const Matrix &initial, const Matrix & direction, 
+double wolfe_powell(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), const ColVector &initial, const ColVector & direction, 
                     const double rho=0.4, const double sigma=0.7, const double eps=1e-8){
 //  Wolfe-Powell不精确一维搜索方法；需要传入函数、导函数；Wolfe-Powell准则中的参数rho, sigma可选，默认0.4, 0.7；
     double a = 0, b = 1e3, alpha = 1;
-    double f0 = f(initial), g0 = value(direction.T()*grad(initial));
+    double f0 = f(initial), g0 = direction.T()*grad(initial);
     int step = 0;
     while(++step<100){
         double fa = f(initial + alpha*direction);
         if(fa > f0+rho*alpha*g0)
             return zoom(f, grad, initial, direction, a, alpha, rho, sigma, 0.1*eps);
-        double ga = value(direction.T()*grad(initial+alpha*direction));
+        double ga = direction.T()*grad(initial+alpha*direction);
         if(fabs(ga) <= -sigma*g0)
             return alpha;
         if(ga >= 0)

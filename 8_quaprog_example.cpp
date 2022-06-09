@@ -6,8 +6,6 @@ using namespace std;
 void example1(){
     const double Hv[] = {2,0,0,2};
     const double cv[] = {-2,-4};
-    const double Aev[] = {};
-    const double bev[] = {};
     const double Aiv[] = {-1,-1,1,0,0,1};
     const double biv[] = {-1,0,0};
     Matrix H(2,2,Hv), Ae, Ai(3,2,Aiv);
@@ -18,8 +16,6 @@ void example1(){
 void example2(){
     const double Hv[] = {3,-1,2,-1,2,0,2,0,4};
     const double cv[] = {1,-3,-2};
-    const double Aev[] = {};
-    const double bev[] = {};
     const double Aiv[] = {-3,2,-5,2,-3,-2,1,0,0,0,1,0,0,0,1};
     const double biv[] = {-4,-3,0,0,0};
     Matrix H(3,3,Hv), Ae, Ai(5,3,Aiv);

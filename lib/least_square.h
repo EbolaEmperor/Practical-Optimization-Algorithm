@@ -5,20 +5,20 @@
 #include "linear_search.h"
 #include "derivation.h"
 
-static Matrix (*curF)(const Matrix&);
-static Matrix (*curJ)(const Matrix&);
+static ColVector (*curF)(const ColVector&);
+static Matrix (*curJ)(const ColVector&);
 static double curErr;
 
-static double fval(const Matrix &x){
-    Matrix y = curF(x);
-    return value(y.T()*y)/2;
+static double fval(const ColVector &x){
+    ColVector y = curF(x);
+    return y.T()*y/2;
 }
 
-static Matrix gradval(const Matrix &x){
+static ColVector gradval(const ColVector &x){
     return curJ(x).T()*curF(x);
 }
 
-static Matrix gradval_gradfree(const Matrix &x){
+static ColVector gradval_gradfree(const ColVector &x){
     return jacobi(curF,x,0.05*curErr).T()*curF(x);
 }
 
@@ -31,7 +31,7 @@ static Matrix gradval_gradfree(const Matrix &x){
  * 返回值是该方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix nonlinlsq_LM(Matrix (*F)(const Matrix&), Matrix (*J)(const Matrix&), Matrix current, const double err=1e-5, 
+ColVector nonlinlsq_LM(ColVector (*F)(const ColVector&), Matrix (*J)(const ColVector&), ColVector current, const double err=1e-5, 
     const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
     curF = F;
     curJ = J;
@@ -39,25 +39,34 @@ Matrix nonlinlsq_LM(Matrix (*F)(const Matrix&), Matrix (*J)(const Matrix&), Matr
     int step = -1;
     double mu = fval(current);
     while(++step < MAXN){
-        Matrix grad = gradval(current);
+        ColVector grad = gradval(current);
         if(grad.vecnorm(2) < err) break;
-        Matrix Jk = J(current), Fk = F(current);
-        Matrix direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
-#ifdef debug
-        std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << direct.T() << "    f=" << fval(current) << std::endl;
-#endif
-        double alpha = wolfe_powell(fval, gradval, current, direct, rho, sigma, 0.05*err);
-        double fval1 = fval(current);
-        current = current + alpha*direct;
-        double fval2 = fval(current);
-        double q = value((Jk.T()*Fk).T()*direct) + 0.5*value((direct.T()*Jk.T()) * (Jk*direct));
-        double r = (fval2-fval1)/q;
+        Matrix Jk = J(current);
+        ColVector Fk = F(current);
+        // 搜索方向的确定是L-M方法的核心
+        ColVector direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
+        double dfval = fval(current + direct) - fval(current);
+        double q = Fk.T()*Jk*direct + 0.5*(Jk*direct).sqrsum();
+        double r = dfval/q;
+        // 若二次函数拟合效果较好，则减小mu以接近二次函数
+        // 若二次函数拟合效果一般，则增大mu以限制dk的模长
         if(r>0.75) mu *= 0.1;
         else if(r<0.25) mu *= 10;
+        // 计算调整mu后的搜索方向
+        direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
+#ifdef DEBUG
+        std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << direct.T() << "    f=" << fval(current) << std::endl;
+#endif
+        // 进行线搜索确定步长
+        double alpha = wolfe_powell(fval, gradval, current, direct, rho, sigma, 0.05*err);
+        current = current + alpha*direct;
     }
 #ifndef SILENCE
-    std::cout << "Total Steps: " << step << std::endl;
-    if(step==MAXN) std::cout << "Early Stop! The result might be unprecision." << std::endl;
+    std::cerr << "---------- Least Square Problem Levenberg-Marquardt Method ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << fval(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -71,7 +80,7 @@ Matrix nonlinlsq_LM(Matrix (*F)(const Matrix&), Matrix (*J)(const Matrix&), Matr
  * 返回值是该方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix nonlinlsq_LM_gradfree(Matrix (*F)(const Matrix&), Matrix current, const double err=1e-5, 
+ColVector nonlinlsq_LM_gradfree(ColVector (*F)(const ColVector&), ColVector current, const double err=1e-5, 
     const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
     curF = F;
     curErr = err;
@@ -79,25 +88,29 @@ Matrix nonlinlsq_LM_gradfree(Matrix (*F)(const Matrix&), Matrix current, const d
     int step = -1;
     double mu = fval(current);
     while(++step < MAXN){
-        Matrix grad = gradval_gradfree(current);
+        ColVector grad = gradval_gradfree(current);
         if(grad.vecnorm(2) < err) break;
-        Matrix Jk = jacobi(F,current,0.05*err), Fk = F(current);
-        Matrix direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
-#ifdef debug
+        Matrix Jk = jacobi(F,current,0.05*err);
+        ColVector Fk = F(current);
+        ColVector direct = -solve(Jk.T()*Jk + mu*eye(n), Jk.T()*Fk);
+#ifdef DEBUG
         std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << direct.T() << "    f=" << fval(current) << std::endl;
 #endif
         double alpha = wolfe_powell(fval, gradval_gradfree, current, direct, rho, sigma, 0.05*err);
         double fval1 = fval(current);
         current = current + alpha*direct;
         double fval2 = fval(current);
-        double q = value((Jk.T()*Fk).T()*direct) + 0.5*value((direct.T()*Jk.T()) * (Jk*direct));
+        double q = Fk.T()*Jk*direct + 0.5*(Jk*direct).sqrsum();
         double r = (fval2-fval1)/q;
         if(r>0.75) mu *= 0.1;
         else if(r<0.25) mu *= 10;
     }
 #ifndef SILENCE
-    std::cout << "Total Steps: " << step << std::endl;
-    if(step==MAXN) std::cout << "Early Stop! The result might be unprecision." << std::endl;
+    std::cerr << "---------- Least Square Problem Levenberg-Marquardt Method (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << fval(current) << std::endl << std::endl;
 #endif
     return current;
 }

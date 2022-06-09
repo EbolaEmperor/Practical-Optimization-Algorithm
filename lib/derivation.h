@@ -66,16 +66,16 @@ Matrix hesse(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6)
     return h;
 }
 
-Matrix jacobi(Matrix (*F)(const Matrix&), const Matrix &x, const double err=1e-6){
-    Matrix y0 = F(x);
+Matrix jacobi(ColVector (*F)(const ColVector&), const ColVector &x, const double err=1e-6){
+    ColVector y0 = F(x);
     const int n = x.n;
     const int m = y0.n;
     Matrix h(m,n);
     for(int j = 0; j < n; j++){
-        Matrix d(n,1);
-        d[j][0] = 1;
+        ColVector d(n);
+        d[j] = 1;
         double alpha = 0.5;
-        Matrix g1 = alpha*(F(x+d)-F(x-d));
+        ColVector g1 = alpha*(F(x+d)-F(x-d));
         double g2 = g1.vecnorm(2)+10*err;
         int step = 0;
         while(fabs(g2-g1.vecnorm(2))>err && ++step<12){
