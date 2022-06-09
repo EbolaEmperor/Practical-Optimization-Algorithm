@@ -5,14 +5,14 @@
 #include <cmath>
 #include "matrix.h"
 
-double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const double err=1e-6){
+double partial(double (*f)(const ColVector&), const ColVector &x, const int &j, const double err=1e-6){
     const int n = x.n;
     if(j<0 || j>=n){
         std::cerr << "partial():: out of range" << std::endl;
         return 0;
     }
-    Matrix d(n,1);
-    d[j][0] = 1;
+    ColVector d(n);
+    d[j] = 1;
     double alpha = 0.5;
     double g1 = alpha*(f(x+d)-f(x-d)), g2 = g1+10*err;
     int step = 0;
@@ -25,23 +25,23 @@ double partial(double (*f)(const Matrix&), const Matrix &x, const int &j, const 
     return g1;
 }
 
-Matrix gradient(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6){
+ColVector gradient(double (*f)(const ColVector&), const ColVector &x, const double err=1e-6){
     const int n = x.n;
-    Matrix g(n,1);
+    ColVector g(n);
     for(int i = 0; i < n; i++)
-        g[i][0] = partial(f, x, i, err);
+        g[i] = partial(f, x, i, err);
     return g;
 }
 
-double partial2(double (*f)(const Matrix&), const Matrix &x, const int &i, const int &j, const double err=1e-6){
+double partial2(double (*f)(const ColVector&), const ColVector &x, const int &i, const int &j, const double err=1e-6){
     const int n = x.n;
     if(j<0 || j>=n || i<0 || i>=n){
         std::cerr << "partial():: out of range" << std::endl;
         return 0;
     }
-    Matrix d1(n,1), d2(n,1);
-    d1[i][0] = 1;
-    d2[j][0] = 1;
+    ColVector d1(n), d2(n);
+    d1[i] = 1;
+    d2[j] = 1;
     double alpha = 0.5;
     double g1 = alpha*alpha*(f(x+d1+d2)+f(x-d1-d2)-f(x+d1-d2)-f(x-d1+d2)), g2 = g1+10*err;
     int step = 0;
@@ -55,7 +55,7 @@ double partial2(double (*f)(const Matrix&), const Matrix &x, const int &i, const
     return g1;
 }
 
-Matrix hesse(double (*f)(const Matrix&), const Matrix &x, const double err=1e-6){
+Matrix hesse(double (*f)(const ColVector&), const ColVector &x, const double err=1e-6){
     const int n = x.n;
     Matrix h(n,n);
     for(int i = 0; i < n; i++){

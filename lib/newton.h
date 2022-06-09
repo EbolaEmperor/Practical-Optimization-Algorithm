@@ -14,11 +14,11 @@
  * 注意：牛顿法只适用于Hessian矩阵正定的函数
  *
  **********************************************************************************/
-Matrix newton(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix (*hessian)(const Matrix&), Matrix current, const double eps=1e-5){
+ColVector newton(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), Matrix (*hessian)(const ColVector&), ColVector current, const double eps=1e-5){
     int step = 0;
     while(grad(current).vecnorm(2)>eps){
         step++;
-        Matrix searchDirection = solveByLDL(hessian(current), -grad(current));
+        ColVector searchDirection = solveByLDL(hessian(current), -grad(current));
         current = current + searchDirection;
         //std::cout << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
         // 这是用于输出每一步迭代信息的测试语句，可以删除
@@ -35,13 +35,13 @@ Matrix newton(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix 
  * 注意：牛顿法只适用于Hessian矩阵正定的函数
  *
  ****************************************************************/
-Matrix newton_gradfree(double (*f)(const Matrix&), Matrix current, const double eps=1e-5){
+ColVector newton_gradfree(double (*f)(const ColVector&), ColVector current, const double eps=1e-5){
     int step = 0;
     while(1){
         step++;
-        Matrix grad = gradient(f, current);
+        ColVector grad = gradient(f, current);
         if(grad.vecnorm(2)<=eps) break;
-        Matrix searchDirection = solveByLDL(hesse(f,current), -grad);
+        ColVector searchDirection = solveByLDL(hesse(f,current), -grad);
         current = current + searchDirection;
 #ifdef debug
         std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
@@ -59,12 +59,12 @@ Matrix newton_gradfree(double (*f)(const Matrix&), Matrix current, const double 
  * 注意：牛顿法只适用于Hessian矩阵正定的函数
  *
  ******************************************************************************************/
-Matrix newton_wolfe(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix (*hessian)(const Matrix&), Matrix current, 
+Matrix newton_wolfe(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), Matrix (*hessian)(const ColVector&), ColVector current,
     const double eps=1e-5, const double rho=0.1, const double sigma=0.4){
     int step = 0;
     while(grad(current).vecnorm(2)>eps){
         step++;
-        Matrix searchDirection = solveByLDL(hessian(current), -grad(current));
+        ColVector searchDirection = solveByLDL(hessian(current), -grad(current));
         searchDirection = 1.0/searchDirection.vecnorm(2) * searchDirection;
         double lambda = wolfe_powell(f,grad,current,searchDirection,rho,sigma,eps);
         current = current + lambda * searchDirection;
@@ -76,12 +76,12 @@ Matrix newton_wolfe(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), M
 }
 
 // Gill-Murray修正牛顿法的主程序
-Matrix newton_gillmurray(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix (*hessian)(const Matrix&), Matrix current, 
+Matrix newton_gillmurray(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), Matrix (*hessian)(const ColVector&), ColVector current,
     const double eps=1e-5, const double rho=0.1, const double sigma=0.4){
     int step = 0;
     while(grad(current).vecnorm(2)>eps){
         step++;
-        Matrix searchDirection = solveByLDL_GM(hessian(current), -grad(current));
+        ColVector searchDirection = solveByLDL_GM(hessian(current), -grad(current));
         searchDirection = 1.0/searchDirection.vecnorm(2) * searchDirection;
         double lambda = wolfe_powell(f,grad,current,searchDirection,rho,sigma,eps);
         current = current + searchDirection;

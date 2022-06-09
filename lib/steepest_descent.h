@@ -12,13 +12,13 @@
  * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，eps是收敛精度，rho和sigma是Wolfe准则的参数
  *
  *******************************************************************************************/
-Matrix steepest_descent(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, 
+Matrix steepest_descent(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current,
     const double eps=1e-5, const double rho=0.1, const double sigma=0.4){
     int step = 0;
     while(grad(current).vecnorm(2)>eps)
     {
         step++;
-        Matrix searchDirection = -grad(current);
+        ColVector searchDirection = -grad(current);
         searchDirection = (1.0/searchDirection.vecnorm(2)) * searchDirection;
         double lambda = wolfe_powell(f,grad,current,searchDirection,rho,sigma,0.01*eps);
         current = current + lambda * searchDirection;
