@@ -9,7 +9,7 @@ using namespace rosenbrock;
 
 int main(){
     cin >> n;
-    Matrix x=initial(), y;
+    ColVector x=initial(), y;
 
     cout << "BFGS Method (with Wolfe)" << endl;
     y = bfgs(f, grad, x, 1e-5, 0.1, 0.4);

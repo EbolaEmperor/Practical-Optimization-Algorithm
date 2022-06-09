@@ -10,7 +10,7 @@ void example1(){
     const double biv[] = {-1,0,0};
     Matrix H(2,2,Hv), Ae, Ai(3,2,Aiv);
     ColVector c(2,cv), be, bi(3,biv), x0(2);
-    Matrix sol = quaprog(H,c,Ae,be,Ai,bi,x0);
+    ColVector sol = quaprog(H,c,Ae,be,Ai,bi,x0);
 }
 
 void example2(){
@@ -20,7 +20,7 @@ void example2(){
     const double biv[] = {-4,-3,0,0,0};
     Matrix H(3,3,Hv), Ae, Ai(5,3,Aiv);
     ColVector c(3,cv), be, bi(5,biv), x0(3);
-    Matrix sol = quaprog(H,c,Ae,be,Ai,bi,x0);
+    ColVector sol = quaprog(H,c,Ae,be,Ai,bi,x0);
 }
 
 int main(){
