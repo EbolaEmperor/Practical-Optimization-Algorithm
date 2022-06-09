@@ -15,24 +15,24 @@
  * 返回值是BFGS方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=5000){
+ColVector bfgs(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=5000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
         if(step>MAXN) break;
-        Matrix direction = -solveByLDL(B,grad(current));
+        ColVector direction = -solveByLDL(B,grad(current));
         double norm = direction.vecnorm(2);
         direction = (1.0/norm)*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma,0.05*err);
         if(alpha < 0.1*err) alpha = norm;
-        Matrix s = alpha*direction;
-        Matrix y = grad(current+s) - grad(current);
+        ColVector s = alpha*direction;
+        ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
     std::cout << "BFGS Total Steps: " << step << std::endl;
     return current;
@@ -46,22 +46,22 @@ Matrix bfgs(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix cu
  * 返回值是BFGS方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix bfgs_goldstein(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.4, const int MAXN=5000){
+ColVector bfgs_goldstein(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.4, const int MAXN=5000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
         if(step>MAXN) break;
-        Matrix direction = -solveByLDL(B,grad(current));
+        ColVector direction = -solveByLDL(B,grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = armijo_goldstein(f,grad,current,direction,rho);
-        Matrix s = alpha*direction;
-        Matrix y = grad(current+s) - grad(current);
+        ColVector s = alpha*direction;
+        ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -78,22 +78,22 @@ Matrix bfgs_goldstein(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&),
  * 找到m后令 x_k+1 = xk + rho^m *dk 进入下一次迭代
  *
  ********************************************************************************************************/
-Matrix bfgs_simple(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=5000){
+ColVector bfgs_simple(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=5000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
         if(step>MAXN) break;
-        Matrix direction = -solveByLDL(B,grad(current));
+        ColVector direction = -solveByLDL(B,grad(current));
         //direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = simple_search(f,grad,current,direction,rho,sigma);
-        Matrix s = alpha*direction;
-        Matrix y = grad(current+s) - grad(current);
+        ColVector s = alpha*direction;
+        ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
     std::cout << "BFGS Total Steps: " << step << std::endl;
     return current;
@@ -107,21 +107,21 @@ Matrix bfgs_simple(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Ma
  * 返回值是DFP方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix dfp(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=500000){
+ColVector dfp(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=500000){
     const int n = current.n;
     Matrix H = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
         if(step>MAXN) break;
-        Matrix direction = -(H*grad(current));
+        ColVector direction = -(H*grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma);
-        Matrix s = alpha*direction;
-        Matrix y = grad(current+s) - grad(current);
+        ColVector s = alpha*direction;
+        ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*s)) * (s*s.T());
+        H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -136,23 +136,23 @@ Matrix dfp(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix cur
  * 返回值是Broyden族校正方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix current, 
+ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current,
                const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
     const int n = current.n;
     Matrix B = eye(n), H = eye(n);
     int step = 0;
     while(grad(current).vecnorm(2) > err){
         step++;
-        Matrix direction = -solveByLDL(B,phi*grad(current)) - (1-phi)*(H*grad(current));
+        ColVector direction = -solveByLDL(B,phi*grad(current)) - (1-phi)*(H*grad(current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell(f,grad,current,direction,rho,sigma);
-        Matrix s = alpha*direction;
-        Matrix y = grad(current+s) - grad(current);
+        ColVector s = alpha*direction;
+        ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
-        H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*y)) * (s*s.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+        H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -166,24 +166,24 @@ Matrix broyden(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix
  * 返回值是BFGS方法求得的最小值点
  *
  ***********************************************************************************************/
-Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
+ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
     while(gradient(f, current).vecnorm(2) > err){
         step++;
-        Matrix direction = -solveByLDL(B,gradient(f, current));
+        ColVector direction = -solveByLDL(B,gradient(f, current));
         double norm = direction.vecnorm(2);
         direction = (1.0/norm)*direction;
         double alpha = wolfe_powell_gradfree(f,current,direction,rho,sigma);
         if(alpha < 0.1*err) alpha = norm;
-        Matrix s = alpha*direction;
-        Matrix y = gradient(f, current+s) - gradient(f, current);
+        ColVector s = alpha*direction;
+        ColVector y = gradient(f, current+s) - gradient(f, current);
         current = current + s;
         if(step > MAXN) break;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << std::endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
 #ifndef SILENCE
     if(step>MAXN) std::cout << "Too many Steps!" << std::endl;
@@ -200,21 +200,21 @@ Matrix bfgs_gradfree(double (*f)(const Matrix&), Matrix current, const double er
  * 返回值是BFGS方法求得的最小值点
  *
  ****************************************************************************************/
-Matrix bfgs_goldstein_gradfree(double (*f)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.4){
+ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.4){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
     while(gradient(f,current).vecnorm(2) > err){
         step++;
-        Matrix direction = -solveByLDL(B,gradient(f,current));
+        ColVector direction = -solveByLDL(B,gradient(f,current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = armijo_goldstein_gradfree(f,current,direction,rho);
-        Matrix s = alpha*direction;
-        Matrix y = gradient(f,current+s) - gradient(f,current);
+        ColVector s = alpha*direction;
+        ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -228,20 +228,20 @@ Matrix bfgs_goldstein_gradfree(double (*f)(const Matrix&), Matrix current, const
  * 返回值是DFP方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix dfp_gradfree(double (*f)(const Matrix&), Matrix current, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
+ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
     const int n = current.n;
     Matrix H = eye(n);
     int step = 0;
     while(gradient(f,current).vecnorm(2) > err){
         step++;
-        Matrix direction = -(H*gradient(f,current));
+        ColVector direction = -(H*gradient(f,current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell_gradfree(f,current,direction,rho,sigma);
-        Matrix s = alpha*direction;
-        Matrix y = gradient(f,current+s) - gradient(f,current);
+        ColVector s = alpha*direction;
+        ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
-        H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*s)) * (s*s.T());
+        H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;
@@ -256,23 +256,23 @@ Matrix dfp_gradfree(double (*f)(const Matrix&), Matrix current, const double err
  * 返回值是Broyden族校正方法求得的最小值点
  *
  ********************************************************************************************************/
-Matrix broyden_gradfree(double (*f)(const Matrix&), Matrix current, 
+ColVector broyden_gradfree(double (*f)(const ColVector&), ColVector current, 
                const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
     const int n = current.n;
     Matrix B = eye(n), H = eye(n);
     int step = 0;
     while(gradient(f,current).vecnorm(2) > err){
         step++;
-        Matrix direction = -solveByLDL(B,phi*gradient(f,current)) - (1-phi)*(H*gradient(f,current));
+        ColVector direction = -solveByLDL(B,phi*gradient(f,current)) - (1-phi)*(H*gradient(f,current));
         direction = (1.0/direction.vecnorm(2))*direction;
         double alpha = wolfe_powell_gradfree(f,current,direction,rho,sigma);
-        Matrix s = alpha*direction;
-        Matrix y = gradient(f,current+s) - gradient(f,current);
+        ColVector s = alpha*direction;
+        ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << endl;
-        if(value(y.T()*s)>0)
-            B = B - (1.0/value(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/value(y.T()*s)) * (y*y.T());
-        H = H - (1.0/value(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/value(s.T()*y)) * (s*s.T());
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+        H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
     std::cout << "Total Steps: " << step << std::endl;
     return current;

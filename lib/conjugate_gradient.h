@@ -58,9 +58,9 @@ Matrix PCG(const Matrix &A, const Matrix &b, Matrix x, Matrix M, const double er
  * 调用CG_FR(f,grad,x,err)即可，其中f为待优化函数，grad为梯度，x为初始迭代位置
  *
  **************************************************************************/
-Matrix CG_FR(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
-    Matrix g = grad(x);
-    Matrix d = -g;
+ColVector CG_FR(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
+    ColVector g = grad(x);
+    ColVector d = -g;
     int step = 0;
     const int n = x.n;
     while(g.vecnorm(2) >= err){
@@ -71,9 +71,9 @@ Matrix CG_FR(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix x
             g = grad(x);
             d = -g;
         } else {
-            double tmp = value(g.T()*g);
+            double tmp = g.sqrsum();
             g = grad(x);
-            double beta = value(g.T()*g) / tmp;
+            double beta = g.sqrsum() / tmp;
             d = -g + beta * d;
         }
     }
@@ -87,9 +87,9 @@ Matrix CG_FR(double (*f)(const Matrix&), Matrix (*grad)(const Matrix&), Matrix x
  * 调用CG_FR(f,grad,x,err)即可，其中f为待优化函数，grad为梯度，x为初始迭代位置
  *
  **************************************************************************/
-Matrix CG_FR_gradfree(double (*f)(const Matrix&), Matrix x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
-    Matrix g = gradient(f, x);
-    Matrix d = -g;
+ColVector CG_FR_gradfree(double (*f)(const ColVector&), ColVector x, const double err = 1e-6, const double rho=0.3, const double sigma=0.6){
+    ColVector g = gradient(f, x);
+    ColVector d = -g;
     int step = 0;
     const int n = x.n;
     while(g.vecnorm(2) >= err){
@@ -100,9 +100,9 @@ Matrix CG_FR_gradfree(double (*f)(const Matrix&), Matrix x, const double err = 1
             g = gradient(f, x);
             d = -g;
         } else {
-            double tmp = value(g.T()*g);
+            double tmp = g.sqrsum();
             g = gradient(f, x);
-            double beta = value(g.T()*g) / tmp;
+            double beta = g.sqrsum() / tmp;
             d = -g + beta * d;
         }
     }

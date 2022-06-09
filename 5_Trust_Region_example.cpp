@@ -9,8 +9,7 @@ using namespace rosenbrock;
 
 int main(){
     cin >> n;
-    Matrix y = trust_region(f, grad, hessian, initial(), 1, 0.01, 0.2, 1e-6);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl;
-    cout << "||grad|| = " << grad(y).vecnorm(2) << endl;
+    ColVector sol1 = trust_region(f, grad, hessian, initial(), 1, 0.01, 0.2, 1e-8);
+    ColVector sol2 = trust_region_gradfree(f, initial(), 1, 0.01, 0.2, 1e-8);
     return 0;
 }

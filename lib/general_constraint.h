@@ -26,11 +26,6 @@ namespace lagrange{
         //std::cerr << "x=" << x.T() << "  psi=" << res + s2/(2.0*sigma) << std::endl;
         return res + s2/(2.0*sigma);
     }
-
-    // 由于实现BFGS时技术落后，传参类型是Matrix而不是ColVector，故这里需要一个转化函数
-    double psi(const Matrix &x){
-        return psi((ColVector)x);
-    }
     
     // 增广拉格朗日函数的梯度
     ColVector gradpsi(const ColVector &x){
@@ -44,11 +39,6 @@ namespace lagrange{
             res = res + (sigma*gval[i]-lambda[i])*Jgval.getCol(i);
         //std::cerr << "x=" << x.T() << "  grad=" << res.T() << std::endl;
         return res;
-    }
-
-    // 由于实现BFGS时技术落后，传参类型是Matrix而不是ColVector，故这里需要一个转化函数
-    Matrix gradpsi(const Matrix &x){
-        return gradpsi((ColVector)x);
     }
 }
 
