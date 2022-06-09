@@ -8,7 +8,7 @@ using namespace std;
 
 int main(){
     rosenbrock::n = 2;
-    Matrix y;
+    ColVector y;
 
     cout << "Pure Newton Method" << endl;
     y = newton(rosenbrock::f, rosenbrock::grad, rosenbrock::hessian, rosenbrock::initial(), 1e-6);
