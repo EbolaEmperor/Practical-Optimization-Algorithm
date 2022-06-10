@@ -1,3 +1,4 @@
+#define DEBUG
 #include "lib/quassi_newton.h"
 #include "func/rosenbrock.h"
 #include <cmath>

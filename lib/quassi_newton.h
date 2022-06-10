@@ -30,9 +30,16 @@ ColVector bfgs(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&
         ColVector s = alpha*direction;
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
-        //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
         if(y.T()*s>0) //这是B保持正定的充要条件。事实上，因为一维搜索采用了Wolfe准则，这个条件总是成立，但其它准则下，这一条件的判断还是必要的
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << grad(current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal BFGS Method with Wolfe Condition ----------" << std::endl;
@@ -65,9 +72,16 @@ ColVector bfgs_goldstein(double (*f)(const ColVector&), ColVector (*grad)(const 
         ColVector s = alpha*direction;
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << grad(current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal BFGS Method with Goldstein Condition ----------" << std::endl;
@@ -103,9 +117,16 @@ ColVector bfgs_simple(double (*f)(const ColVector&), ColVector (*grad)(const Col
         ColVector s = alpha*direction;
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
-        //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << grad(current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal BFGS Method with Armijo Condition ----------" << std::endl;
@@ -138,8 +159,15 @@ ColVector dfp(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&)
         ColVector s = alpha*direction;
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << grad(current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal DFP Method with Wolfe Condition ----------" << std::endl;
@@ -173,10 +201,17 @@ ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVect
         ColVector s = alpha*direction;
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << grad(current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal Broyden Method with Wolfe Condition ----------" << std::endl;
@@ -211,9 +246,16 @@ ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const 
         ColVector y = gradient(f, current+s) - gradient(f, current);
         current = current + s;
         if(step > MAXN) break;
-        //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << std::endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << gradient(f,current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal BFGS Method with Wolfe Condition (gradfree) ----------" << std::endl;
@@ -245,9 +287,16 @@ ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector curre
         ColVector s = alpha*direction;
         ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << gradient(f,current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal BFGS Method with Goldstein Condition (gradfree) ----------" << std::endl;
@@ -279,8 +328,15 @@ ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const d
         ColVector s = alpha*direction;
         ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << gradient(f,current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal DFP Method with Wolfe Condition (gradfree) ----------" << std::endl;
@@ -314,10 +370,17 @@ ColVector broyden_gradfree(double (*f)(const ColVector&), ColVector current,
         ColVector s = alpha*direction;
         ColVector y = gradient(f,current+s) - gradient(f,current);
         current = current + s;
-        //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << gradient(f,current).vecnorm(2) << endl;
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << gradient(f,current).vecnorm(2) << std::endl << std::endl;
+#endif
     }
 #ifndef SILENCE
     std::cerr << "---------- Non-Constraint Optimal Broyden Method with Wolfe Condition (gradfree) ----------" << std::endl;
