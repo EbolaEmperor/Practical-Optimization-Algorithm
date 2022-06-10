@@ -11,24 +11,19 @@ int main(){
     cin >> n;
     ColVector x=initial(), y;
 
-    cout << "BFGS Method (with Wolfe)" << endl;
+    // 带Wolve准则的BFGS方法
     y = bfgs(f, grad, x, 1e-5, 0.1, 0.4);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl << endl;
 
-    cout << "BFGS Method (with Goldstein)" << endl;
+    // 带Goldstein准则的BFGS方法
     y = bfgs_goldstein(f, grad, x, 1e-5, 0.2);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl << endl;
 
-    cout << "BFGS Method (with Simple)" << endl;
+    // 带Armijo准则的BFGS方法
     y = bfgs_simple(f, grad, x, 1e-5, 0.1, 0.2);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl << endl;
 
-    cout << "DFP Method (with Wolfe)" << endl;
+    // 带Wolve准则的DFP方法
     y = dfp(f, grad, x, 1e-5, 0.1, 0.4);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl << endl;
 
-    cout << "Broyden Method (with Wolfe)" << endl;
+    // 带Wolve准则的Broyden方法
     y = broyden(f, grad, x, 0.8, 1e-5, 0.1, 0.4);
-    cout << "min f = f(" << y.T() << ") = " << f(y) << endl << endl;
     return 0;
 }

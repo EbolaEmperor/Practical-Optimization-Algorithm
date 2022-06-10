@@ -31,10 +31,16 @@ ColVector bfgs(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&
         ColVector y = grad(current+s) - grad(current);
         current = current + s;
         //std::cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << std::endl;
-        if(y.T()*s>0)
+        if(y.T()*s>0) //这是B保持正定的充要条件。事实上，因为一维搜索采用了Wolfe准则，这个条件总是成立，但其它准则下，这一条件的判断还是必要的
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
-    std::cout << "BFGS Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Wolfe Condition ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -63,7 +69,13 @@ ColVector bfgs_goldstein(double (*f)(const ColVector&), ColVector (*grad)(const 
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Goldstein Condition ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -95,7 +107,13 @@ ColVector bfgs_simple(double (*f)(const ColVector&), ColVector (*grad)(const Col
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
-    std::cout << "BFGS Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Armijo Condition ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -123,7 +141,13 @@ ColVector dfp(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&)
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal DFP Method with Wolfe Condition ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -137,7 +161,7 @@ ColVector dfp(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&)
  *
  ********************************************************************************************************/
 ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&), ColVector current,
-               const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
+               const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=50000){
     const int n = current.n;
     Matrix B = eye(n), H = eye(n);
     int step = 0;
@@ -154,7 +178,13 @@ ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVect
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal Broyden Method with Wolfe Condition ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -166,7 +196,7 @@ ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVect
  * 返回值是BFGS方法求得的最小值点
  *
  ***********************************************************************************************/
-ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=2000){
+ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.3, const double sigma=0.6, const int MAXN=5000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
@@ -186,8 +216,11 @@ ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const 
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
 #ifndef SILENCE
-    if(step>MAXN) std::cout << "Too many Steps!" << std::endl;
-    std::cout << "BFGS Total Steps: " << step << std::endl;
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Wolfe Condition (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -200,7 +233,7 @@ ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const 
  * 返回值是BFGS方法求得的最小值点
  *
  ****************************************************************************************/
-ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.4){
+ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.4, const int MAXN=5000){
     const int n = current.n;
     Matrix B = eye(n);
     int step = 0;
@@ -216,7 +249,13 @@ ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector curre
         if(y.T()*s>0)
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Goldstein Condition (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -228,7 +267,7 @@ ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector curre
  * 返回值是DFP方法求得的最小值点
  *
  ********************************************************************************************************/
-ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
+ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=50000){
     const int n = current.n;
     Matrix H = eye(n);
     int step = 0;
@@ -243,7 +282,13 @@ ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const d
         //cout << "Step: " << step << "    current=" << current.T() << "    direction=" << direction.T() << "    f=" << f(current)  << "    ||grad||=" << grad(current).vecnorm(2) << endl;
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal DFP Method with Wolfe Condition (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 
@@ -257,7 +302,7 @@ ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const d
  *
  ********************************************************************************************************/
 ColVector broyden_gradfree(double (*f)(const ColVector&), ColVector current, 
-               const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4){
+               const double phi=1, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=50000){
     const int n = current.n;
     Matrix B = eye(n), H = eye(n);
     int step = 0;
@@ -274,7 +319,13 @@ ColVector broyden_gradfree(double (*f)(const ColVector&), ColVector current,
             B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
         H = H - (1.0/(y.T()*H*y)) * ((H*y)*(y.T()*H)) + (1.0/(s.T()*s)) * (s*s.T());
     }
-    std::cout << "Total Steps: " << step << std::endl;
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal Broyden Method with Wolfe Condition (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+#endif
     return current;
 }
 

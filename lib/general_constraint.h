@@ -2,7 +2,15 @@
 #define _GENERAL_CONSTRAINT_H_
 
 #include "matrix.h"
-#include "quassi_newton.h"
+
+#ifndef SILENCE
+    #define SILENCE
+    #include "quassi_newton.h"
+    #undef SILENCE
+#else
+    #include "quassi_newton.h"
+#endif
+
 #include "derivation.h"
 #include <iostream>
 #include <cmath>
