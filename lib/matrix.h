@@ -408,7 +408,7 @@ Matrix solve(Matrix A, Matrix b){
         int p = i;
         for(int j=i; j<n; j++)
             if(fabs(A[j][i])>fabs(A[p][i])) p=j;
-        if(p!=i) A.swaprow(i,p);
+        if(p!=i) A.swaprow(i,p), b.swaprow(i,p);
         if(!A[i][i]){
             std::cerr << "Matrix Error! The method solve() cannot solve an singular equation!" << std::endl;
             return Matrix();
