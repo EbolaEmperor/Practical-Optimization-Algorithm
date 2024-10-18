@@ -1,9 +1,9 @@
 /***************************************************************
  *
  * 这是一个矩阵运算库，为了方便以后设计算法更加简洁，特编写以用
- * 版本号：v1.0.2
+ * 版本号：v1.1.0
  * 
- * copyright © 2022 Wenchong Huang, All rights reserved.
+ * copyright © 2023 Wenchong Huang, All rights reserved.
  *
  **************************************************************/
 
@@ -13,13 +13,20 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <vector>
+#include <complex>
+#include <algorithm>
+
+typedef std::complex<double> Complex;
+
+const double mat_eps = 1e-12;
 
 class Matrix;
 class ColVector;
 class RowVector;
 
 class Matrix{
-private:
+protected:
     double *a;
 public:
     int n, m;
@@ -35,35 +42,56 @@ public:
     Matrix & operator = (const Matrix & rhs);
     Matrix & operator = (Matrix && rhs);
 
-    const double* operator [] (const int &r) const;
-    double* operator [] (const int &r);
+    const double operator () (const int &r, const int &c) const;
+    double & operator () (const int &r, const int &c);
+    const double* operator [] (const int &r) const{ return a + (r * m); }
+    double* operator [] (const int &r){ return a + (r * m); }
     const double element(const int &r, const int &c) const;
-    double& element(const int &r, const int &c);
+    double & element(const int &r, const int &c);
 
     friend Matrix diag(const Matrix &A);
 
     void setSubmatrix(const int &r, const int &c, const Matrix &rhs);
     Matrix getSubmatrix(const int &r1, const int &r2, const int &c1, const int &c2) const;
+    Matrix reshape(const int &_n, const int &_m) const;
 
     RowVector getRow(const int &r) const;
     ColVector getCol(const int &c) const;
 
+    Matrix operator + (const double &x) const;
+    Matrix operator - (const double &x) const;
     Matrix operator + (const Matrix &B) const;
     Matrix operator - () const;
     Matrix operator - (const Matrix &B) const;
     Matrix operator * (const Matrix &B) const;
+    Matrix operator / (const double &p) const;
     Matrix T() const;
 
-    double vecnorm(const double &p);
+    double vecnorm(const double &p) const;
+    double maxnorm() const;
     void swaprow(const int &r1, const int &r2);
     void swapcol(const int &r1, const int &r2);
 
+    friend Matrix solve(Matrix A, Matrix b);
+    ColVector solve(const ColVector &b) const;
     double det() const;
     Matrix inv() const;
     Matrix rref() const;
     void FGdecompose(Matrix &F, Matrix &G) const;
     Matrix pinv() const;
     double sqrsum() const;
+
+//下面是1.1.0版本新增函数，用于求解矩阵的特征值，预计下一版本添加反幂法求特征向量
+public:
+    std::vector<Complex> eigen() const;
+private:
+    Matrix realSchur() const;
+    std::pair<Matrix,Matrix> hessenberg() const;
+    std::pair<ColVector,double> householder() const;
+    std::pair<Matrix,Matrix> doubleQR() const;
+    std::pair<Matrix,Matrix> getQR() const;
+    bool isComplexEigen() const;
+    std::pair<Complex,Complex> getComplexEigen() const;
 };
 
 class RowVector: public Matrix{
@@ -73,12 +101,14 @@ public:
     RowVector(const int &n, const double *p): Matrix(1,n,p) {};
     RowVector(const Matrix &rhs);
     int size() const;
-    const double operator [](const int &x) const;
-    double & operator [] (const int &x);
+    const double operator ()(const int &x) const;
+    double & operator () (const int &x);
     RowVector operator + (const RowVector &rhs) const;
     RowVector operator - (const RowVector &rhs) const;
     RowVector operator - () const;
     ColVector T() const;
+    const double operator [] (const int &r) const{ return a[r]; }
+    double& operator [] (const int &r){ return a[r]; }
 };
 
 class ColVector: public Matrix{
@@ -88,12 +118,15 @@ public:
     ColVector(const int &n, const double *p): Matrix(n,1,p) {};
     ColVector(const Matrix &rhs);
     int size() const;
-    const double operator [](const int &x) const;
-    double & operator [] (const int &x);
+    void sort();
+    const double operator ()(const int &x) const;
+    double & operator () (const int &x);
     ColVector operator + (const ColVector &rhs) const;
     ColVector operator - (const ColVector &rhs) const;
     ColVector operator - () const;
     RowVector T() const;
+    const double operator [] (const int &r) const{ return a[r]; }
+    double& operator [] (const int &r){ return a[r]; }
 };
 
 Matrix hilbert(const int &n);
@@ -103,8 +136,59 @@ Matrix eye(const int &n);
 double value(const Matrix &A);
 ColVector zeroCol(const int &n);
 RowVector zeroRow(const int &n);
+int sgn(const double &x);
 
 //----------------------Matrix相关函数---------------------------
+Matrix operator * (const double &k, const Matrix &x);
+Matrix abs(const Matrix &A);
+Matrix log2(const Matrix &A);
+double max(const Matrix &A);
+double sum(const Matrix &A);
+std::istream& operator >> (std::istream& in, Matrix &A);
+std::ostream& operator << (std::ostream& out, const Matrix &A);
+Matrix dotdiv(const Matrix &a, const Matrix &b);
+Matrix solveLowerTriangular(const Matrix &A, const Matrix &b);
+Matrix solveUpperTriangular(const Matrix &A, const Matrix &b);
+ColVector CG_solve(const Matrix &A, const ColVector &b);
+ColVector CG_solve(const Matrix &A, const ColVector &b, const double err);
+ColVector CG_solve(const Matrix &A, const ColVector &b, const double err, ColVector x);
+double det(const Matrix &A);
+Matrix inv(const Matrix &A);
+Matrix choleskyImproved(const Matrix &A);
+Matrix solveByLDL(const Matrix &A, const Matrix &b);
+Matrix gillMurray(Matrix A);
+Matrix solveByLDL_GM(const Matrix &A, const Matrix &b);
+Matrix pinv(const Matrix &A);
+Matrix mergeCol(const Matrix &A, const Matrix &B);
+Matrix mergeRow(const Matrix &A, const Matrix &B);
+Matrix min(const Matrix &A, const Matrix &B);
+Matrix max(const Matrix &A, const Matrix &B);
+double vecnorm(const Matrix &A, const double &p);
+double vecnorm(const Matrix &A);
+double maxnorm(const Matrix &A);
+double relativeError(const Matrix &A, const Matrix &B);
+Matrix randMatrix(const int &n, const int &m);
+Matrix randInvertibleMatrix(const int &n);
+
+//----------------------Row/ColVector相关函数----------------------
+RowVector operator * (const double &k, const RowVector &x);
+ColVector operator * (const double &k, const ColVector &x);
+ColVector operator * (const Matrix &A, const ColVector &x);
+RowVector operator * (const RowVector &x, const Matrix &A);
+double operator * (const RowVector &r, const ColVector &c);
+
+//----------------------基本算术扩展----------------------------
+double fact(const int &n);
+double sqr(const double &x);
+double binom(const int &n, const int &k);
+
+
+
+
+
+
+
+//---------------------- 实现 --------------------------
 
 Matrix::Matrix(){
     n = m = 0;
@@ -127,7 +211,7 @@ Matrix::Matrix(const Matrix &A){
     a = new double[n*m];
     for(int i = 0; i < n; i++)
         for(int j = 0; j < m; j++)
-            a[i*m+j] = A[i][j];
+            element(i,j) = A(i,j);
 }
 Matrix::Matrix(const double *p, const int &_n){
     n = _n; m = 1;
@@ -149,8 +233,12 @@ bool Matrix::empty() const{
 }
 
 Matrix & Matrix::operator = (const Matrix & rhs){
-    Matrix copy(rhs);
-    std::swap(*this, copy);
+    if(n == rhs.n && m == rhs.m){
+        std::memcpy(a, rhs.a, sizeof(double) * (n*m));
+    } else {
+        Matrix copy(rhs);
+        std::swap(*this, copy);
+    }
     return *this;
 }
 Matrix & Matrix::operator = (Matrix && rhs){
@@ -160,35 +248,43 @@ Matrix & Matrix::operator = (Matrix && rhs){
     return *this;
 }
 
-const double* Matrix::operator [] (const int &r) const{
-    return a + r*m;
-}
-double* Matrix::operator [] (const int &r){
-    return a + r*m;
-}
 const double Matrix::element(const int &r, const int &c) const{
+    if(r<0 || r>=n || c<0 || c>=m){
+        std::cerr << "[Error] Matrix:: out of range" << std::endl;
+        exit(-1);
+    }
     return a[r*m+c];
 }
-double& Matrix::element(const int &r, const int &c){
+double & Matrix::element(const int &r, const int &c){
+    if(r<0 || r>=n || c<0 || c>=m){
+        std::cerr << "[Error] Matrix:: out of range" << std::endl;
+        exit(-1);
+    }
     return a[r*m+c];
+}
+const double Matrix::operator () (const int &r, const int &c) const{
+    return element(r, c);
+}
+double & Matrix::operator () (const int &r, const int &c){
+    return element(r, c);
 }
 
 Matrix diag(const Matrix &A){
     if(A.n==1 && A.m>0){
         Matrix D(A.m, A.m);
         for(int i = 0; i < A.m; i++)
-            D[i][i] = A[0][i];
+            D(i, i) = A(0, i);
         return D;
     } else if(A.m==1 && A.n>0){
         Matrix D(A.n, A.n);
         for(int i = 0; i < A.n; i++)
-            D[i][i] = A[i][0];
+            D(i, i) = A(i, 0);
         return D;
     } else {
         int n = std::min(A.n,A.m);
         Matrix D(n,1);
         for(int i = 0; i < n; i++)
-            D[i][0] = A[i][i];
+            D(i, 0) = A(i, i);
         return D;
     }
 }
@@ -201,7 +297,7 @@ void Matrix::setSubmatrix(const int &r, const int &c, const Matrix &rhs){
     }
     for(int i = 0; i < rhs.n; i++)
         for(int j = 0; j < rhs.m; j++)
-            a[(r+i)*m+(j+c)] = rhs[i][j];
+            element(r+i, j+c) = rhs(i, j);
 }
 
 Matrix Matrix::getSubmatrix(const int &r1, const int &r2, const int &c1, const int &c2) const{
@@ -212,22 +308,49 @@ Matrix Matrix::getSubmatrix(const int &r1, const int &r2, const int &c1, const i
     Matrix sub(r2-r1+1, c2-c1+1);
     for(int i = 0; i < r2-r1+1; i++)
         for(int j = 0; j < c2-c1+1; j++)
-            sub[i][j] = a[(r1+i)*m+(c1+j)];
+            sub(i, j) = element(r1+i, c1+j);
     return sub;
+}
+
+Matrix Matrix::reshape(const int &_n, const int &_m) const{
+    if(_n*_m != n*m){
+        std::cerr << "Matrix Error! Reshape should keep the size!" << std::endl;
+        exit(-1);
+    }
+    Matrix rhs = *this;
+    rhs.n = _n;
+    rhs.m = _m;
+    return rhs;
 }
 
 RowVector Matrix::getRow(const int &r) const{
     RowVector res(m);
     for(int i = 0; i < m; i++)
-        res[i] = a[r*m+i];
+        res(i) = element(r,i);
     return res;
 }
 
 ColVector Matrix::getCol(const int &c) const{
     ColVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = a[i*m+c];
+        res(i) = element(i,c);
     return res;
+}
+
+Matrix Matrix::operator + (const double &x) const {
+    Matrix C(n, m);
+    for(int i = 0; i < C.n; i++)
+        for(int j = 0; j < C.m; j++)
+            C(i, j) = element(i,j) + x;
+    return C;
+}
+
+Matrix Matrix::operator - (const double &x) const {
+    Matrix C(n, m);
+    for(int i = 0; i < C.n; i++)
+        for(int j = 0; j < C.m; j++)
+            C(i, j) = element(i,j) - x;
+    return C;
 }
 
 Matrix Matrix::operator + (const Matrix &B) const {
@@ -238,7 +361,7 @@ Matrix Matrix::operator + (const Matrix &B) const {
     Matrix C(n, m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = a[i*m+j] + B[i][j];
+            C(i, j) = element(i,j) + B(i, j);
     return C;
 }
 
@@ -246,7 +369,7 @@ Matrix Matrix::operator - () const {
     Matrix C(n, m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = -a[i*m+j];
+            C(i, j) = -element(i,j);
     return C;
 }
 
@@ -258,7 +381,7 @@ Matrix Matrix::operator - (const Matrix &B) const {
     Matrix C(n, m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = a[i*m+j] - B[i][j];
+            C(i, j) = element(i,j) - B(i, j);
     return C;
 }
 
@@ -266,7 +389,15 @@ Matrix operator * (const double &k, const Matrix &A) {
     Matrix C(A.n, A.m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = k * A[i][j];
+            C(i, j) = k * A(i, j);
+    return C;
+}
+
+Matrix Matrix::operator / (const double &k) const {
+    Matrix C(n, m);
+    for(int i = 0; i < C.n; i++)
+        for(int j = 0; j < C.m; j++)
+            C(i, j) = element(i, j) / k;
     return C;
 }
 
@@ -279,7 +410,7 @@ Matrix Matrix::operator * (const Matrix &B) const{
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
             for(int k = 0; k < m; k++)
-                C[i][j] += a[i*m+k] * B[k][j];
+                C(i, j) += a[i*m+k] * B(k, j);
     return C;
 }
 
@@ -287,15 +418,34 @@ Matrix Matrix::T() const{
     Matrix C(m, n);
     for(int i = 0; i < n; i++)
         for(int j = 0; j < m; j++)
-            C[j][i] = a[i*m+j];
+            C(j, i) = element(i,j);
     return C;
 }
 
-double Matrix::vecnorm(const double &p){
+double Matrix::maxnorm() const{
+    double norm = 0;
+    for(int i = 0; i < n*m; i++)
+        norm = std::max(norm, fabs(a[i]));
+    return norm;
+}
+
+double maxnorm(const Matrix &A){
+    return A.maxnorm();
+}
+
+double Matrix::vecnorm(const double &p) const{
     double norm = 0;
     for(int i = 0; i < n*m; i++)
         norm += pow(a[i], p);
     return pow(norm, 1.0/p);
+}
+
+double vecnorm(const Matrix &A, const double &p){
+    return A.vecnorm(p);
+}
+
+double vecnorm(const Matrix &A){
+    return A.vecnorm(2);
 }
 
 // 将矩阵中所有元素取绝对值后返回，用法：B=abs(A)
@@ -303,17 +453,17 @@ Matrix abs(const Matrix &A){
     Matrix C = A;
     for(int i = 0; i < A.n; i++)
         for(int j = 0; j < A.m; j++)
-            C[i][j] = std::fabs(A[i][j]);
+            C(i, j) = std::fabs(A(i, j));
     return C;
 }
 
 // 矩阵求最大值函数，返回矩阵中的最大元素，用法：x=max(A)
 double max(const Matrix &A){
     if(A.m==0 || A.n==0) return 0;
-    double res = A[0][0];
+    double res = A(0, 0);
     for(int i = 0; i < A.n; i++)
         for(int j = 0; j < A.m; j++)
-            res = std::max(res, A[i][j]);
+            res = std::max(res, A(i, j));
     return res;
 }
 
@@ -322,23 +472,23 @@ double sum(const Matrix &A){
     double res = 0;
     for(int i = 0; i < A.n; i++)
         for(int j = 0; j < A.m; j++)
-            res += A[i][j];
+            res += A(i, j);
     return res;
 }
 
 std::istream& operator >> (std::istream& in, Matrix &A){
     for(int i = 0; i < A.n; i++)
         for(int j = 0; j < A.m; j++)
-            in >> A[i][j];
+            in >> A(i, j);
     return in;
 }
 
 std::ostream& operator << (std::ostream& out, const Matrix &A){
     for(int i = 0; i < A.n; i++)
     {
-        out << "[ " << A[i][0];
+        out << "[ " << A(i, 0);
         for(int j = 1; j < A.m; j++)
-            out << ", " << A[i][j];
+            out << ", " << A(i, j);
         out << " ]";
         if(i < A.n-1) out << std::endl;
     }
@@ -347,7 +497,7 @@ std::ostream& operator << (std::ostream& out, const Matrix &A){
 
 void Matrix::swaprow(const int &r1, const int &r2){
     if(r1<0 || r1>=n || r2<0 || r2>=n){
-        std::cerr << "Matrix Error! Swaprow ouof range!" << std::endl;
+        std::cerr << "Matrix Error! Swaprow out of range!" << std::endl;
         exit(-1);
     }
     for(int j = 0; j < m; j++)
@@ -356,7 +506,7 @@ void Matrix::swaprow(const int &r1, const int &r2){
 
 void Matrix::swapcol(const int &r1, const int &r2){
     if(r1<0 || r1>=m || r2<0 || r2>=m){
-        std::cerr << "Matrix Error! Swapcol ouof range!" << std::endl;
+        std::cerr << "Matrix Error! Swapcol out of range!" << std::endl;
         exit(-1);
     }
     for(int i = 0; i < n; i++)
@@ -368,7 +518,7 @@ Matrix dotdiv(const Matrix &a, const Matrix &b){
     Matrix x = a;
     for(int i = 0; i < a.n; i++)
         for(int j = 0; j < a.m; j++)
-            x[i][j] /= b[i][j];
+            x(i, j) /= b(i, j);
     return x;
 }
 
@@ -377,9 +527,9 @@ Matrix solveLowerTriangular(const Matrix &A, const Matrix &b){
     Matrix x = b;
     int n = A.n;
     for(int i = 0; i < n; i++){
-        x[i][0] /= A[i][i];
+        x(i, 0) /= A(i, i);
         for(int j = i+1; j < n; j++)
-            x[j][0] -= x[i][0] * A[j][i];
+            x(j, 0) -= x(i, 0) * A(j, i);
     }
     return x;
 }
@@ -389,40 +539,79 @@ Matrix solveUpperTriangular(const Matrix &A, const Matrix &b){
     Matrix x = b;
     int n = A.n;
     for(int i = n-1; i >= 0; i--){
-        x[i][0] /= A[i][i];
+        x(i, 0) /= A(i, i);
         for(int j = 0; j < i; j++)
-            x[j][0] -= x[i][0] * A[j][i];
+            x(j, 0) -= x(i, 0) * A(j, i);
     }
     return x;
 }
 
 // 解方程Ax=b，算法为列主元法Gauss消元，用法：x = solve(A,b)
 Matrix solve(Matrix A, Matrix b){
-    if(A.m!=A.n || A.n!=b.n || A.m==0){
+    if(A.n<A.m || A.n!=b.n || A.m==0){
         std::cerr << "Matrix Error! The method solve() cannot solve an ill-posed equation!" << std::endl;
         return Matrix();
     }
-    int n = A.n;
-    Matrix x(n,1);
-    for(int i = 0; i < n; i++){
+    int n = A.n, m = A.m;
+    Matrix x(m,1);
+    int* columns = new int[m];
+    int col_cnt;
+    for(int i = 0; i < m; i++){
         int p = i;
-        for(int j=i; j<n; j++)
-            if(fabs(A[j][i])>fabs(A[p][i])) p=j;
+        for(int j = i; j < n; j++)
+            if(fabs(A(j, i))>fabs(A(p, i))) p=j;
         if(p!=i) A.swaprow(i,p), b.swaprow(i,p);
-        if(!A[i][i]){
+        if( !A(i, i) ){
             std::cerr << "Matrix Error! The method solve() cannot solve an singular equation!" << std::endl;
+            std::cerr << "Error occurs at i=" << i << std::endl;
             return Matrix();
         }
-        for(int j = 0; j < n; j++){
-            if(i==j) continue;
-            double coef = A[j][i]/A[i][i];
-            for(int k = i; k < n; k++)
-                A[j][k] -= A[i][k]*coef;
-            b[j][0] -= b[i][0]*coef;
+        col_cnt = 0;
+        for(int j = i; j < m; j++)
+            if( A(i,j) ) columns[col_cnt++] = j;
+        // 冗余列优化，显著提升稀疏矩阵运算速度
+        for(int j = i+1; j < n; j++){
+            if( !A(j, i) ) continue; // 冗余行优化，显著提升稀疏矩阵运算速度
+            double coef = A(j, i) / A(i, i);
+            for(int k = 0; k < col_cnt; k++)
+                A(j, columns[k]) -= A(i, columns[k]) * coef;
+            b(j, 0) -= b(i, 0) * coef;
         }
     }
-    for(int i = 0; i < n; i++)
-        x[i][0] = b[i][0]/A[i][i];
+    for(int i = m-1; i >= 0; i--){
+        x(i, 0) = b(i, 0)/A(i, i);
+        for(int j = 0; j < i; j++)
+            b(j, 0) -= A(j, i) * x(i, 0);
+    }
+    delete [] columns;
+    return x;
+}
+ColVector Matrix::solve(const ColVector & b) const{
+    return ::solve(*this, b);
+}
+
+// 共轭梯度法求解方程 Ax=b，要求A是方阵
+ColVector CG_solve(const Matrix &A, const ColVector &b){
+    return CG_solve(A, b, 1e-6);
+}
+ColVector CG_solve(const Matrix &A, const ColVector &b, const double err){
+    return CG_solve(A, b, err, ColVector());
+}
+ColVector CG_solve(const Matrix &A, const ColVector &b, const double err, ColVector x){
+    if(x.empty()) x = ColVector(b.size());
+    ColVector r = A*x-b;
+    ColVector p = -r;
+    long long step = 0;
+    while(r.vecnorm(2) >= err){
+        step++;
+        double alpha = - value(r.T()*p) / (p.T()*A*p);
+        x = x + alpha*p;
+        double tmp = value(r.T()*r);
+        r = r + alpha*A*p;
+        double beta = value(r.T()*r) / tmp;
+        p = -r + beta*p;
+    }
+    std::cout << "Steps: " << step << std::endl;
     return x;
 }
 
@@ -436,14 +625,14 @@ double Matrix::det() const{
     double ans = 1;
     for(int i = 0; i < n; i++){
         int p = i;
-        while(p<n && A[p][i]==0) p++;
+        while(p<n && A(p, i)==0) p++;
         if(p==n) return 0;
-        if(p!=i) A.swaprow(i,p);
-        ans *= A[i][i];
+        if(p!=i) A.swaprow(i,p), ans = -ans;
+        ans *= A(i, i);
         for(int j = i+1; j < n; j++){
-            double coef = A[j][i]/A[i][i];
+            double coef = A(j, i)/A(i, i);
             for(int k = i; k < n; k++)
-                A[j][k] -= A[i][k]*coef;
+                A(j, k) -= A(i, k)*coef;
         }
     }
     return ans;
@@ -463,33 +652,33 @@ Matrix Matrix::inv() const{
     Matrix A(n,2*n);
     for(int i = 0; i < n; i++)
     {
-        A[i][i+n] = 1;
+        A(i, i+n) = 1;
         for(int j = 0; j < n; j++)
-            A[i][j] = a[i*m+j];
+            A(i, j) = element(i,j);
     }
     for(int i = 0; i < n; i++){
         int p = i;
         for(int j = i+1; j < n; j++)
-            if(fabs(A[j][i])>fabs(A[p][i])) p=j;
-        if(A[p][i]==0){
+            if(fabs(A(j, i))>fabs(A(p, i))) p=j;
+        if(A(p, i)==0){
             std::cerr << "Matrix Error! There's no inverse of a singular matrix!" << std::endl;
             return Matrix();
         }
         if(p!=i) A.swaprow(i,p);
         for(int k = i+1; k < 2*n; k++)
-            A[i][k] /= A[i][i];
-        A[i][i] = 1;
+            A(i, k) /= A(i, i);
+        A(i, i) = 1;
         for(int j = 0; j < n; j++){
             if(i==j) continue;
-            double coef = A[j][i];
+            double coef = A(j, i);
             for(int k = i; k < 2*n; k++)
-                A[j][k] -= A[i][k]*coef;
+                A(j, k) -= A(i, k)*coef;
         }
     }
     Matrix ans(n,n);
     for(int i = 0; i < n; i++)
         for(int j = 0; j < n; j++)
-            ans[i][j] = A[i][j+n];
+            ans(i, j) = A(i, j+n);
     return ans;
 }
 
@@ -508,15 +697,15 @@ Matrix choleskyImproved(const Matrix &A){
     Matrix L(n, n);
     for(int j = 0; j < n; j++)
     {
-        L[j][j] = A[j][j];
+        L(j, j) = A(j, j);
         for(int k = 0; k < j; k++)
-            L[j][j] -= L[j][k]*L[k][k]*L[j][k];
+            L(j, j) -= L(j, k)*L(k, k)*L(j, k);
         for(int i = j+1; i < n; i++)
         {
-            L[i][j] = A[i][j];
+            L(i, j) = A(i, j);
             for(int k = 0; k < j; k++)
-                L[i][j] -= L[i][k]*L[k][k]*L[j][k];
-            L[i][j] /= L[j][j];
+                L(i, j) -= L(i, k)*L(k, k)*L(j, k);
+            L(i, j) /= L(j, j);
         }
     }
     return L;
@@ -543,36 +732,36 @@ Matrix gillMurray(Matrix A){
     double gamma=0, xi=0;
     for(int i = 0; i < n; i++)
     {
-        gamma = max(gamma, fabs(A[i][i]));
+        gamma = max(gamma, fabs(A(i, i)));
         for(int j = 0; j < i; j++)
-            xi = max(xi, fabs(A[i][j]));
+            xi = max(xi, fabs(A(i, j)));
     }
     double nu = max(1.0, sqrt(n*n-1));
     double beta2 = max(max(gamma,xi/nu),1e-6);
     Matrix c(n,n);
     for(int i = 0; i < n; i++)
-        c[i][i] = A[i][i];
+        c(i, i) = A(i, i);
     Matrix L(n,n);
     for(int j = 0; j < n; j++)
     {
         int q = j;
         for(int k = j+1; k < n; k++)
-            if(fabs(c[k][k])>fabs(c[q][q])) q = k;
+            if(fabs(c(k, k))>fabs(c(q, q))) q = k;
         if(j!=q) A.swapcol(j,q), A.swaprow(j,q);
         for(int k = 0; k < j; k++)
-            L[j][k] = c[j][k]/L[k][k];
+            L(j, k) = c(j, k)/L(k, k);
         for(int i = j+1; i < n; i++)
         {
-            c[i][j] = A[i][j];
+            c(i, j) = A(i, j);
             for(int k = 0; k < j; k++)
-                c[i][j] -= c[i][k]*L[j][k];
+                c(i, j) -= c(i, k)*L(j, k);
         }
         double theta = 0;
         for(int k = j+1; k < n; k++)
-            theta = max(theta, fabs(c[k][j]));
-        L[j][j] = max(max(fabs(c[j][j]),theta*theta/beta2),1e-3);
+            theta = max(theta, fabs(c(k, j)));
+        L(j, j) = max(max(fabs(c(j, j)),theta*theta/beta2),1e-3);
         for(int i = j+1; i < n; i++)
-            c[i][i] -= c[i][j]*c[i][j]/L[j][j];
+            c(i, i) -= c(i, j)*c(i, j)/L(j, j);
     }
     return L;
 }
@@ -594,17 +783,17 @@ Matrix Matrix::rref() const{
     for(int i = 0; i < std::min(n,m); i++){
         int p = row;
         for(int j = row+1; j < n; j++)
-            if(fabs(A[j][i])>fabs(A[p][i])) p=j;
-        if(A[p][i]==0) continue;
+            if(fabs(A(j, i))>fabs(A(p, i))) p=j;
+        if(A(p, i)==0) continue;
         if(p!=row) A.swaprow(row,p);
         for(int k = i+1; k < m; k++)
-            A[row][k] /= A[row][i];
-        A[row][i] = 1;
+            A(row, k) /= A(row, i);
+        A(row, i) = 1;
         for(int j = 0; j < n; j++){
             if(j==row) continue;
-            double coef = A[j][i]/A[row][i];
+            double coef = A(j, i)/A(row, i);
             for(int k = i; k < m; k++)
-                A[j][k] -= A[row][k]*coef;
+                A(j, k) -= A(row, k)*coef;
         }
         row++;
     }
@@ -620,7 +809,7 @@ void Matrix::FGdecompose(Matrix &F, Matrix &G) const{
     int num = 0;
     for(int i = 0; i < G.n; i++)
         for(int j = i; j < G.m; j++)
-            if(G[i][j]==1){
+            if(G(i, j)==1){
                 F.setSubmatrix(0,num,getSubmatrix(0,n-1,j,j));
                 num++;
                 break;
@@ -673,6 +862,14 @@ double Matrix::sqrsum() const{
     return res;
 }
 
+Matrix log2(const Matrix &A) {
+    Matrix res(A.n,A.m);
+    for(int i = 0; i < res.n; i++)
+        for(int j = 0; j < res.m; j++)
+            res(i,j) = log2(A(i,j));
+    return res;
+}
+
 // 返回一个矩阵C，使得C(i,j)=min(A(i,j),B(i,j))
 Matrix min(const Matrix &A, const Matrix &B){
     if(A.n!=B.n || A.m!=B.m){
@@ -682,7 +879,7 @@ Matrix min(const Matrix &A, const Matrix &B){
     Matrix C(A.n,A.m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = std::min(A[i][j],B[i][j]);
+            C(i, j) = std::min(A(i, j),B(i, j));
     return C;
 }
 
@@ -695,7 +892,7 @@ Matrix max(const Matrix &A, const Matrix &B){
     Matrix C(A.n,A.m);
     for(int i = 0; i < C.n; i++)
         for(int j = 0; j < C.m; j++)
-            C[i][j] = std::max(A[i][j],B[i][j]);
+            C(i, j) = std::max(A(i, j),B(i, j));
     return C;
 }
 
@@ -708,15 +905,15 @@ ColVector::ColVector(const Matrix &rhs){
     } else {
         (*this) = ColVector(rhs.n);
         for(int i = 0; i < n; i++)
-            (*this)[i] = rhs[i][0];
+            (*this)(i) = rhs(i, 0);
     }
 }
 
-const double ColVector::operator [](const int &x) const{
+const double ColVector::operator ()(const int &x) const{
     return element(x,0);
 }
     
-double & ColVector::operator [] (const int &x){
+double & ColVector::operator () (const int &x){
     return element(x,0);
 }
 
@@ -731,7 +928,7 @@ ColVector ColVector::operator + (const ColVector &rhs) const{
     }
     ColVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = (*this)[i] + rhs[i];
+        res(i) = (*this)(i) + rhs(i);
     return res;
 }
 
@@ -742,21 +939,14 @@ ColVector ColVector::operator - (const ColVector &rhs) const{
     }
     ColVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = (*this)[i] - rhs[i];
+        res(i) = (*this)(i) - rhs(i);
     return res;
 }
 
 ColVector ColVector::operator - () const{
     ColVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = -(*this)[i];
-    return res;
-}
-
-ColVector operator * (const double &k, const ColVector &x){
-    ColVector res(x.n);
-    for(int i = 0; i < res.n; i++)
-        res[i] = k * x[i];
+        res(i) = -(*this)(i);
     return res;
 }
 
@@ -768,14 +958,25 @@ ColVector operator * (const Matrix &A, const ColVector &x){
     ColVector res(A.n);
     for(int i = 0; i < res.n; i++)
         for(int j = 0; j < A.m; j++)
-            res[i] += A[i][j] * x[j];
+            res(i) += A(i, j) * x(j);
+    return res;
+}
+
+void ColVector::sort(){
+    std::sort(a, a+n);
+}
+
+ColVector operator * (const double &k, const ColVector &x){
+    ColVector res(x.n);
+    for(int i = 0; i < res.n; i++)
+        res(i) = k * x(i);
     return res;
 }
 
 RowVector ColVector::T() const{
     RowVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = (*this)[i];
+        res(i) = (*this)(i);
     return res;
 }
 
@@ -789,27 +990,20 @@ RowVector::RowVector(const Matrix &rhs){
     } else {
         (*this) = RowVector(rhs.m);
         for(int i = 0; i < m; i++)
-            (*this)[i] = rhs[0][i];
+            (*this)(i) = rhs(0, i);
     }
 }
 
-const double RowVector::operator [](const int &x) const{
+const double RowVector::operator ()(const int &x) const{
     return element(0,x);
 }
 
-double & RowVector::operator [] (const int &x){
+double & RowVector::operator () (const int &x){
     return element(0,x);
 }
 
 int RowVector::size() const{
     return m;
-}
-
-RowVector operator * (const double &k, const RowVector &x){
-    RowVector res(x.n);
-    for(int i = 0; i < res.n; i++)
-        res[i] = k * x[i];
-    return res;
 }
 
 RowVector operator * (const RowVector &x, const Matrix &A){
@@ -820,7 +1014,7 @@ RowVector operator * (const RowVector &x, const Matrix &A){
     RowVector res(A.m);
     for(int i = 0; i < res.m; i++)
         for(int j = 0; j < A.n; j++)
-            res[i] += A[j][i] * x[j];
+            res(i) += A(j, i) * x(j);
     return res;
 }
 
@@ -839,7 +1033,7 @@ RowVector RowVector::operator + (const RowVector &rhs) const{
     }
     RowVector res(m);
     for(int i = 0; i < m; i++)
-        res[i] = (*this)[i] + rhs[i];
+        res(i) = (*this)(i) + rhs(i);
     return res;
 }
 
@@ -850,21 +1044,28 @@ RowVector RowVector::operator - (const RowVector &rhs) const{
     }
     RowVector res(m);
     for(int i = 0; i < m; i++)
-        res[i] = (*this)[i] - rhs[i];
+        res(i) = (*this)(i) - rhs(i);
     return res;
 }
 
 RowVector RowVector::operator - () const{
     RowVector res(m);
     for(int i = 0; i < m; i++)
-        res[i] = -(*this)[i];
+        res(i) = -(*this)(i);
+    return res;
+}
+
+RowVector operator * (const double &k, const RowVector &x){
+    RowVector res(x.m);
+    for(int i = 0; i < res.m; i++)
+        res(i) = k * x(i);
     return res;
 }
 
 ColVector RowVector::T() const{
     ColVector res(n);
     for(int i = 0; i < n; i++)
-        res[i] = (*this)[i];
+        res(i) = (*this)(i);
     return res;
 }
 
@@ -872,7 +1073,7 @@ Matrix hilbert(const int &n){
     Matrix H(n, n);
     for(int i = 0; i < n; i++)
         for(int j = 0; j < n; j++)
-            H[i][j] = 1.0/(i+j+1);
+            H(i, j) = 1.0/(i+j+1);
     return H;
 }
 
@@ -884,19 +1085,19 @@ Matrix ones(const int &n, const int &m){
     Matrix H(n, m);
     for(int i = 0; i < n; i++)
         for(int j = 0; j < m; j++)
-            H[i][j] = 1.0;
+            H(i, j) = 1.0;
     return H;
 }
 
 Matrix eye(const int &n){
     Matrix H(n, n);
     for(int i = 0; i < n; i++)
-        H[i][i] = 1.0;
+        H(i, i) = 1.0;
     return H;
 }
 
 double value(const Matrix &A){
-    return A[0][0];
+    return A(0, 0);
 }
 
 ColVector zeroCol(const int &n){
@@ -911,6 +1112,225 @@ int sgn(const double &x){
     if(x>0) return 1;
     else if(x<0) return -1;
     else return 0;
+}
+
+double sqr(const double &x){
+    return x*x;
+}
+
+double fact(const int &n){
+    double ans = 1;
+    for(int i = 2; i <= n; i++)
+        ans *= i;
+    return ans;
+}
+
+double binom(const int &n, const int &k){
+    return fact(n)/(fact(k)*fact(n-k));
+}
+
+double relativeError(const Matrix &A, const Matrix &B){
+    double err = 0;
+    for(int i = 0; i < A.n; i++)
+        for(int j = 0; j < A.m; j++){
+            err = std::max(err, fabs(A(i,j)-B(i,j)) / std::max(std::max( fabs(A(i,j)), fabs(B(i,j)) ), 1.0) );
+        }
+    return err;
+}
+
+//---------------------------1.1.0版本新增函数----------------------------------
+
+std::vector<Complex> Matrix::eigen() const{
+    Matrix X = randInvertibleMatrix(n);
+    Matrix A = X * (*this) * X.inv();
+    std::vector<Complex> res;
+    Matrix H = A.realSchur();
+    int i = 0;
+    while(i < n){
+        if(i==n-1 || H(i+1,i)==0){
+            res.push_back(H(i,i));
+            i++;
+        } else {
+            auto p = H.getSubmatrix(i,i+1,i,i+1).getComplexEigen();
+            res.push_back(p.first);
+            res.push_back(p.second);
+            i += 2;
+        }
+    }
+    return res;
+}
+
+Matrix Matrix::realSchur() const{
+    auto p = hessenberg();
+    auto H = std::move(p.first);
+    auto Q = std::move(p.second);
+    static const double u = 1e-14;
+    while(true){
+        for(int i = 1; i < n; i++){
+            if( fabs(H(i,i-1)) <= (fabs(H(i,i))+fabs(H(i-1,i-1)))*u )
+                H(i,i-1) = 0;
+        }
+        int m = 1;
+        while(m <= n){
+            if(m == n || fabs(H(n-m,n-m-1)) < u){
+                m++;
+            } else {
+                if( (m == n-1 || fabs(H(n-m-1,n-m-2)) < u) && H.getSubmatrix(n-m-1,n-m,n-m-1,n-m).isComplexEigen()){
+                    m += 2;
+                } else {
+                    break;
+                }
+            }
+        }
+        if(m == n+1) break;
+        int l = n - m;
+        while( l > 0 && fabs(H(l,l-1)) >= u ){
+            l--;
+        }
+        l--;
+        auto p = H.getSubmatrix(l+1,n-m, l+1,n-m).doubleQR();
+        H.setSubmatrix(l+1,l+1, std::move(p.first));
+        Matrix E = eye(n), P = std::move(p.second);
+        E.setSubmatrix(l+1,l+1, P);
+        if(l>=0) H.setSubmatrix(0,l+1, H.getSubmatrix(0,l,l+1,n-m)*P);
+        if(m>1) H.setSubmatrix(l+1,n-m+1, P.T()*H.getSubmatrix(l+1,n-m,n-m+1,n-1));
+    }
+    for(int k = 2; k < n; k++)
+        for(int j = 0; j < k-1; j++)
+            H(k,j) = 0;
+    return H;
+}
+
+std::pair<Matrix,Matrix> Matrix::doubleQR() const{
+    if(n <= 2){
+        // 对于2*2的矩阵，无法使用双重步隐式QR迭代，遂使用位移QR迭代
+        double mu = element(n-1,n-1);
+        Matrix H = (*this) - mu*eye(n);
+        auto p = H.getQR();
+        return std::make_pair(p.second*p.first + mu*eye(n), p.first);
+    }
+    Matrix P = eye(n), H = (*this);
+    double mm = n-1;
+    double s = H(mm-1,mm-1) + H(n-1,n-1);
+    double t = H(mm-1,mm-1)*H(n-1,n-1) - H(mm-1,n-1)*H(n-1,mm-1);
+    double x = H(0,0)*H(0,0) + H(0,1)*H(1,0) - s*H(0,0) + t;
+    double y = H(1,0) * (H(0,0)+H(1,1)-s);
+    double z = H(1,0)*H(2,1);
+    for(int k = 0; k < n-2; k++){
+        ColVector tmpc(3);
+        tmpc(0)=x; tmpc(1)=y; tmpc(2)=z;
+        auto p = tmpc.householder();
+        int q = std::max(0, k-1);
+        Matrix Pk = eye(3) - p.second*(p.first*p.first.T());
+        H.setSubmatrix(k,q, Pk*H.getSubmatrix(k,k+2,q,n-1));
+        int r = std::min(k+3,n-1);
+        H.setSubmatrix(0,k, H.getSubmatrix(0,r,k,k+2)*Pk);
+        x = H(k+1, k);
+        y = H(k+2, k);
+        if(k < n-3) z = H(k+3, k);
+        Matrix E = eye(n);
+        E.setSubmatrix(k,k,Pk);
+        P = P * E;
+    }
+    ColVector tmpc(2);
+    tmpc(0)=x; tmpc(1)=y;
+    auto p = tmpc.householder();
+    Matrix Pk = eye(2) - p.second*(p.first*p.first.T());
+    H.setSubmatrix(n-2,n-3, Pk*H.getSubmatrix(n-2,n-1,n-3,n-1));
+    H.setSubmatrix(0,n-2, H.getSubmatrix(0,n-1,n-2,n-1)*Pk);
+    Matrix E = eye(n);
+    E.setSubmatrix(n-2,n-2,Pk);
+    P = P * E;
+    for(int k = 2; k < n; k++)
+        for(int j = 0; j < k-1; j++)
+            H(k,j) = 0;
+    return std::make_pair(H,P);
+}
+
+std::pair<Matrix,Matrix> Matrix::getQR() const{
+    Matrix Q = eye(n), A = (*this);
+    for(int j = 0; j < m; j++){
+        if(j >= n) break;
+        auto p = A.getSubmatrix(j,n-1,j,j).householder();
+        auto H = eye(n-j) - p.second*(p.first*p.first.T());
+        A.setSubmatrix(j,j, H*A.getSubmatrix(j,n-1,j,m-1));
+        auto E = eye(n);
+        E.setSubmatrix(j,j,H);
+        Q = Q * E;
+    }
+    return std::make_pair(Q, n==m ? A : A.getSubmatrix(0,n-1,0,n-1));
+}
+
+std::pair<Matrix,Matrix> Matrix::hessenberg() const{
+    Matrix A = (*this);
+    Matrix Q = eye(n);
+    for(int k = 0; k < n-2; k++){
+        auto p = A.getSubmatrix(k+1,n-1,k,k).householder();
+        Matrix Hk = eye(n-k-1) - p.second*(p.first*p.first.T());
+        A.setSubmatrix(k+1,k, Hk*A.getSubmatrix(k+1,n-1,k,n-1));
+        A.setSubmatrix(0,k+1, A.getSubmatrix(0,n-1,k+1,n-1)*Hk);
+        Matrix E = eye(n);
+        E.setSubmatrix(k+1,k+1,Hk);
+        Q = Q * E;
+    }
+    for(int k = 2; k < n; k++)
+        for(int j = 0; j < k-1; j++)
+            A(k,j) = 0;
+    return std::make_pair(A,Q);
+}
+
+std::pair<ColVector,double> Matrix::householder() const{
+    ColVector v = zeros(n,1);
+    if(maxnorm()==0){
+        return std::make_pair(v, 0.0);
+    }
+    double ita = maxnorm(), beta;
+    ColVector x = (*this)/ita;
+    double sigma = 0.0;
+    for(int i = 1; i < n; i++){
+        sigma += x(i) * x(i);
+        v(i) = x(i);
+    }
+    if(sigma == 0){
+        beta = 0;
+    } else {
+        double alpha = sqrt(x(0)*x(0)+sigma);
+        if(x(0) <= 0)
+            v(0) = x(0) - alpha;
+        else
+            v(0) = -sigma/(x(0)+alpha);
+        beta = 2*v(0)*v(0) / (sigma+v(0)*v(0));
+        v = v/v(0);
+    }
+    return std::make_pair(v,beta);
+}
+
+std::pair<Complex,Complex> Matrix::getComplexEigen() const{
+    double trace = element(0,0)+element(1,1);
+    Complex delta = sqr(trace) - 4*det();
+    return std::make_pair( 0.5*(trace+sqrt(delta)), 0.5*(trace-sqrt(delta)) );
+}
+
+bool Matrix::isComplexEigen() const{
+    double trace = element(0,0)+element(1,1);
+    double delta = sqr(trace) - 4*det();
+    return delta < -1e-13;
+}
+
+Matrix randMatrix(const int &n, const int &m){
+    Matrix A(n,m);
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+            A(i,j) = (double)rand()/RAND_MAX;
+    return A;
+}
+
+Matrix randInvertibleMatrix(const int &n){
+    Matrix A = randMatrix(n, n);
+    while(fabs(det(A))<1e-8){
+        A = randMatrix(n, n);
+    }
+    return A;
 }
 
 #endif
