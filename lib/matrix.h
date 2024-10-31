@@ -1333,4 +1333,11 @@ Matrix randInvertibleMatrix(const int &n){
     return A;
 }
 
+double norm(const ColVector &x, int p = 2){
+    if(p == 0) return max(abs(x));
+    else if(p == 1) return sum(abs(x));
+    else if(p == 2) return sqrt(x.sqrsum());
+    else return -1;
+}
+
 #endif
