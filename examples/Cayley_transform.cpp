@@ -55,7 +55,7 @@ int main(){
     cout << "--------------------------" << endl;
 
     auto z = initx;
-    z(0) += sgn(initx(0)) * alpha;
+    z(0) += alpha;
     ColVector v = z / norm(z);
     auto w = v.getSubmatrix(1, n - 1, 0, 0) / v(0);
     cout << "Exact w:" << endl;
