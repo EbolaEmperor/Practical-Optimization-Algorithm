@@ -24,7 +24,7 @@ int main(){
         output(x), cout << endl;
     auto dpoly = poly.derivative();
     roots = dpoly.roots();
-    cout << "The extreme points or saddle points are:" << endl;
+    cout << "The extreme or saddle points are:" << endl;
     for(auto x : roots){
         cout << "p(";
         output(x);

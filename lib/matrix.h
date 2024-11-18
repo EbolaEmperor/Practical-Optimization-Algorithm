@@ -1161,9 +1161,7 @@ std::vector<Complex> Matrix::eigen() const{
 }
 
 Matrix Matrix::realSchur() const{
-    auto p = hessenberg();
-    auto H = std::move(p.first);
-    auto Q = std::move(p.second);
+    auto [H, Q] = hessenberg();
     static const double u = 1e-14;
     while(true){
         for(int i = 1; i < n; i++){
@@ -1206,8 +1204,8 @@ std::pair<Matrix,Matrix> Matrix::doubleQR() const{
         // 对于2*2的矩阵，无法使用双重步隐式QR迭代，遂使用位移QR迭代
         double mu = element(n-1,n-1);
         Matrix H = (*this) - mu*eye(n);
-        auto p = H.getQR();
-        return std::make_pair(p.second*p.first + mu*eye(n), p.first);
+        auto [Q, R] = H.getQR();
+        return std::make_pair(R * Q + mu * eye(n), Q);
     }
     Matrix P = eye(n), H = (*this);
     double mm = n-1;
