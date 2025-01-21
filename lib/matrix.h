@@ -36,6 +36,8 @@ public:
     Matrix(const Matrix &A);
     Matrix(const double *p, const int &_n);
     Matrix(const int &_n, const int &_m, const double *p);
+    Matrix(const ColVector &v);
+    Matrix(const RowVector &v);
     ~Matrix();
     bool empty() const;
 
@@ -224,6 +226,20 @@ Matrix::Matrix(const int &_n, const int &_m, const double *p){
     a = new double[n*m];
     for(int i = 0; i < n*m; i++)
         a[i] = p[i];
+}
+Matrix::Matrix(const ColVector &v){
+    n = v.size();
+    m = 1;
+    a = new double[n];
+    for(int i = 0; i < n; i++)
+        a[i] = v(i);
+}
+Matrix::Matrix(const RowVector &v){
+    n = 1;
+    m = v.size();
+    a = new double[m];
+    for(int i = 0; i < m; i++)
+        a[i] = v(i);
 }
 Matrix::~Matrix(){
     delete [] a;

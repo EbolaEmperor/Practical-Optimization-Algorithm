@@ -66,7 +66,7 @@ bool simplex_prework(Matrix &a, int *id){
  *      x >= 0
  * 使用方法： sol = linprog(c,A,b)，返回值为最优点，无解将会返回空向量
 *************************************************************************/
-Matrix linprog(const Matrix &c, const Matrix &A, const Matrix &b){
+ColVector linprog(const ColVector &c, const Matrix &A, const ColVector &b){
     static int *id, x, y;
     const int n = A.n, m = A.m;
     id = new int[n+m+1];
@@ -88,9 +88,9 @@ Matrix linprog(const Matrix &c, const Matrix &A, const Matrix &b){
         delete id;
         return Matrix();
     }
-    Matrix ans(m, 1);
+    ColVector ans(m);
     for(int i = 1; i <= n; i++)
-        if(id[m+i]) ans[id[m+i]-1][0] = a[i][0];
+        if(id[m+i]) ans(id[m+i]-1) = a[i][0];
     delete id;
     return ans;
 }
