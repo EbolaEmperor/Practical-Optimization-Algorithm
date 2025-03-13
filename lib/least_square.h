@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include "linear_search.h"
 #include "derivation.h"
+#include <cassert>
 
 static ColVector (*curF)(const ColVector&);
 static Matrix (*curJ)(const ColVector&);
@@ -113,6 +114,26 @@ ColVector nonlinlsq_LM_gradfree(ColVector (*F)(const ColVector&), ColVector curr
     std::cerr << "OPtimal Value: " << fval(current) << std::endl << std::endl;
 #endif
     return current;
+}
+
+/********************************************************************************************************
+ *
+ * 这是一个 QR 分解法求解线性最小二乘问题的最优化程序
+ * 用法：sol = linlsq(A, b)
+ *
+ ********************************************************************************************************/
+ColVector linlsq(const Matrix &A, const ColVector &b){
+    assert(A.n >= A.m);
+    auto [Q, R] = A.getQR();
+    int m = A.m;
+    auto sol = solveUpperTriangular(R.getSubmatrix(0, m-1, 0, m-1), 
+                                    (Q.T() * b).getSubmatrix(0, m-1, 0, 0));
+#ifndef SILENCE
+    std::cerr << "---------- Linear Least Square Problem ----------" << std::endl;
+    std::cerr << "Optimal Point: " << sol.T() << std::endl;
+    std::cerr << "OPtimal Value: " << norm(A * sol - b) << std::endl << std::endl;
+#endif
+    return sol;
 }
 
 #endif

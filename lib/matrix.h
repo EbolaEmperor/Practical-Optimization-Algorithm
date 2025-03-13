@@ -86,12 +86,12 @@ public:
 //下面是1.1.0版本新增函数，用于求解矩阵的特征值，预计下一版本添加反幂法求特征向量
 public:
     std::vector<Complex> eigen() const;
+    std::pair<Matrix,Matrix> getQR() const;
 private:
     Matrix realSchur() const;
     std::pair<Matrix,Matrix> hessenberg() const;
     std::pair<ColVector,double> householder() const;
     std::pair<Matrix,Matrix> doubleQR() const;
-    std::pair<Matrix,Matrix> getQR() const;
     bool isComplexEigen() const;
     std::pair<Complex,Complex> getComplexEigen() const;
 };
@@ -1272,7 +1272,7 @@ std::pair<Matrix,Matrix> Matrix::getQR() const{
         E.setSubmatrix(j,j,H);
         Q = Q * E;
     }
-    return std::make_pair(Q, n==m ? A : A.getSubmatrix(0,n-1,0,n-1));
+    return std::make_pair(Q, A);
 }
 
 std::pair<Matrix,Matrix> Matrix::hessenberg() const{
