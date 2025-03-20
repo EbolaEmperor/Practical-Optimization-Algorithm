@@ -70,7 +70,6 @@ public:
     friend ColVector solveUpperTriangular(const SparseMatrix &U, const ColVector &b, int bandwidth);
 };
 
-#include "sparseMatrix.h"
 #include <vector>
 #include <algorithm>
 #include <iostream>
