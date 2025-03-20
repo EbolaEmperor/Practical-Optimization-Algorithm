@@ -1,6 +1,6 @@
 #include "lib/conjugate_gradient.h"
 #include "lib/preconditioner.h"
-#include "lib/sparseMatrix.h"
+#include "lib/sparse_matrix.h"
 using namespace std;
 
 Matrix getLaplacian1D(int n){
