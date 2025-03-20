@@ -1,7 +1,6 @@
 #pragma once
 
 #include "matrix.h"
-#include "amg.h"
 
 class Preconditioner{
 public:
@@ -36,20 +35,5 @@ public:
         for(int i = 0; i < d.size(); i++) x(i) *= d(i);
         x = solveUpperTriangular(M2, x, bandwidth);
         return x * ((2 - omega) / omega);
-    }
-};
-
-
-class AMGPreconditioner : public Preconditioner{
-private:
-    amgSolver solver;
-
-public:
-    AMGPreconditioner(const SparseMatrix &A){
-        solver.generateGrid(A);
-    }
-
-    ColVector vmult(const ColVector &b) const{
-        return solver.FMG(0, b);
     }
 };

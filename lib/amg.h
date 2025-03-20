@@ -2,6 +2,7 @@
 
 #include "sparse_matrix.h"
 #include "matrix.h"
+#include "preconditioner.h"
 #include <vector>
 #include <cstring>
 
@@ -22,6 +23,20 @@ public:
     ColVector solve(const ColVector &rhs, const std::string &method, const int &maxIter, const double &eps) const;
 };
 
+
+class AMGPreconditioner : public Preconditioner{
+private:
+    amgSolver solver;
+
+public:
+    AMGPreconditioner(const SparseMatrix &A){
+        solver.generateGrid(A);
+    }
+
+    ColVector vmult(const ColVector &b) const{
+        return solver.FMG(0, b);
+    }
+};
 
 #include "avl.h"
 #include <vector>
