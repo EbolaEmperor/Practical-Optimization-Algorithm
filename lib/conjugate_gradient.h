@@ -36,20 +36,21 @@ Matrix CG(const Matrix &A, const Matrix &b, Matrix x, const double err = 1e-6){
  * 调用PCG(A,b,x,M,err)即可，其中x为初始迭代位置, M是预优因子
  *
  **************************************************************/
-Matrix PCG(const Matrix &A, const Matrix &b, Matrix x, const Preconditioner &P, const double err = 1e-6){
-    Matrix r = A*x-b, y = P.vmult(r), p = -y;
+template <typename Mat>
+ColVector PCG(const Mat &A, const ColVector &b, ColVector x, const Preconditioner &P, const double err = 1e-6){
+    ColVector r = A * x - b, y = P.vmult(r), p = -y;
     long long step = 0;
     while(r.vecnorm(2) >= err){
         step++;
-        double tmp = value(r.T() * y);
-        double alpha = tmp / value(p.T() * A * p);
+        double tmp = dot(r, y);
+        double alpha = tmp / dot(p, A * p);
         x = x + alpha * p;
         r = r + alpha * (A * p);
         y = P.vmult(r);
-        double beta = value(r.T() * y) / tmp;
+        double beta = dot(r, y) / tmp;
         p = -y + beta * p;
     }
-    std::cout << "Steps: " << step << std::endl;
+    std::cout << "PCG Steps: " << step << std::endl;
     return x;
 }
 

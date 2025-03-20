@@ -7,20 +7,25 @@ public:
     virtual ColVector vmult(const ColVector &b) const = 0;
 };
 
+template <typename Mat>
 class SSORPreconditioner : public Preconditioner{
 private:
-    Matrix M1, M2;
+    Mat M1, M2;
     ColVector d;
     int bandwidth;
     double omega;
 
 public:
-    SSORPreconditioner(const Matrix &A, double omega = 1.0, int bandwidth = -1)
-      : bandwidth(bandwidth), omega(omega)
+    SSORPreconditioner(const Mat &A, double omega = 1.0, int bandwidth = -1)
+      : bandwidth(bandwidth), 
+        omega(omega), 
+        M1(A.nRows(), A.nCols()), 
+        M2(A.nRows(), A.nCols())
     {
-        Matrix L = tril(A, -1);
+        Mat L = tril(A, -1);
         d = diag(A);
-        M1 = diag((1.0 / omega) * d) + L;
+        M1.setdiag((1.0 / omega) * d);
+        M1 = M1 + L;
         M2 = M1.T();
     }
 

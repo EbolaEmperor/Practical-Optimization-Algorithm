@@ -31,6 +31,9 @@ protected:
     double *a;
 public:
     int n, m;
+    int nRows() const { return n; }
+    int nCols() const { return m; }
+    
     Matrix();
     Matrix(const int &_n);
     Matrix(const int &_n, const int &_m);
@@ -86,6 +89,7 @@ public:
     void FGdecompose(Matrix &F, Matrix &G) const;
     Matrix pinv() const;
     double sqrsum() const;
+    void setdiag(const ColVector &d);
 
 //下面是1.1.0版本新增函数，用于求解矩阵的特征值，预计下一版本添加反幂法求特征向量
 public:
@@ -1390,6 +1394,26 @@ Matrix triu(const Matrix &A, int d = 0){
         for(int j = i + d; j < A.m; j++)
             B(i,j) = A(i,j);
     return B;
+}
+
+void Matrix::setdiag(const ColVector &x){
+    if(n != m || n != x.size()){
+        std::cerr << "Matrix Error! The method setdiag() cannot apply on a non-square matrix or a vector of different size!" << std::endl;
+        return;
+    }
+    for(int i = 0; i < n; i++)
+        a[i * m + i] = x(i);
+}
+
+double dot(const ColVector &x, const ColVector &y){
+    if(x.size() != y.size()){
+        std::cerr << "Vector Error! The method dot() cannot apply on two vectors of different size!" << std::endl;
+        return 0;
+    }
+    double res = 0;
+    for(int i = 0; i < x.size(); i++)
+        res += x(i) * y(i);
+    return res;
 }
 
 #endif
