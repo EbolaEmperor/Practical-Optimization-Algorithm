@@ -16,6 +16,7 @@
 #include <vector>
 #include <complex>
 #include <algorithm>
+#include <iomanip>
 
 typedef std::complex<double> Complex;
 
@@ -62,6 +63,9 @@ public:
 
     Matrix operator + (const double &x) const;
     Matrix operator - (const double &x) const;
+    Matrix operator * (const double &x) const;
+    friend Matrix operator * (const double &k, const Matrix &A);
+
     Matrix operator + (const Matrix &B) const;
     Matrix operator - () const;
     Matrix operator - (const Matrix &B) const;
@@ -149,8 +153,8 @@ double sum(const Matrix &A);
 std::istream& operator >> (std::istream& in, Matrix &A);
 std::ostream& operator << (std::ostream& out, const Matrix &A);
 Matrix dotdiv(const Matrix &a, const Matrix &b);
-Matrix solveLowerTriangular(const Matrix &A, const Matrix &b);
-Matrix solveUpperTriangular(const Matrix &A, const Matrix &b);
+Matrix solveLowerTriangular(const Matrix &A, const Matrix &b, int bandwidth = -1);
+Matrix solveUpperTriangular(const Matrix &A, const Matrix &b, int bandwidth = -1);
 ColVector CG_solve(const Matrix &A, const ColVector &b);
 ColVector CG_solve(const Matrix &A, const ColVector &b, const double err);
 ColVector CG_solve(const Matrix &A, const ColVector &b, const double err, ColVector x);
@@ -361,6 +365,18 @@ Matrix Matrix::operator + (const double &x) const {
     return C;
 }
 
+Matrix Matrix::operator * (const double &x) const {
+    Matrix C(n, m);
+    for(int i = 0; i < C.n; i++)
+        for(int j = 0; j < C.m; j++)
+            C(i, j) = element(i,j) * x;
+    return C;
+}
+
+Matrix operator * (const double &k, const Matrix &A) {
+    return A * k;
+}
+
 Matrix Matrix::operator - (const double &x) const {
     Matrix C(n, m);
     for(int i = 0; i < C.n; i++)
@@ -401,14 +417,6 @@ Matrix Matrix::operator - (const Matrix &B) const {
     return C;
 }
 
-Matrix operator * (const double &k, const Matrix &A) {
-    Matrix C(A.n, A.m);
-    for(int i = 0; i < C.n; i++)
-        for(int j = 0; j < C.m; j++)
-            C(i, j) = k * A(i, j);
-    return C;
-}
-
 Matrix Matrix::operator / (const double &k) const {
     Matrix C(n, m);
     for(int i = 0; i < C.n; i++)
@@ -424,9 +432,12 @@ Matrix Matrix::operator * (const Matrix &B) const{
     }
     Matrix C(n, B.m);
     for(int i = 0; i < C.n; i++)
-        for(int j = 0; j < C.m; j++)
-            for(int k = 0; k < m; k++)
-                C(i, j) += a[i*m+k] * B(k, j);
+        for(int k = 0; k < m; k++){
+            double tmp = a[i * m + k];
+            if(!tmp) continue;
+            for(int j = 0; j < C.m; j++)
+                C(i, j) += tmp * B(k, j);
+        }
     return C;
 }
 
@@ -500,13 +511,14 @@ std::istream& operator >> (std::istream& in, Matrix &A){
 }
 
 std::ostream& operator << (std::ostream& out, const Matrix &A){
+    out << std::setprecision(14);
     for(int i = 0; i < A.n; i++)
     {
         out << "[ " << A(i, 0);
         for(int j = 1; j < A.m; j++)
             out << ", " << A(i, j);
         out << " ]";
-        if(i < A.n-1) out << std::endl;
+        if(i < A.n - 1) out << "\n";
     }
     return out;
 }
@@ -539,25 +551,35 @@ Matrix dotdiv(const Matrix &a, const Matrix &b){
 }
 
 // 解下三角方程，用法：x = solveLowerTriangular(A,b)
-Matrix solveLowerTriangular(const Matrix &A, const Matrix &b){
+Matrix solveLowerTriangular(const Matrix &A, const Matrix &b, int bandwidth){
     Matrix x = b;
     int n = A.n;
     for(int i = 0; i < n; i++){
         x(i, 0) /= A(i, i);
-        for(int j = i+1; j < n; j++)
-            x(j, 0) -= x(i, 0) * A(j, i);
+        if(bandwidth == -1){
+            for(int j = i + 1; j < n; j++)
+                x(j, 0) -= x(i, 0) * A(j, i);
+        } else {
+            for(int j = i + 1; j < n && j <= i + bandwidth; j++)
+                x(j, 0) -= x(i, 0) * A(j, i);
+        }
     }
     return x;
 }
 
 // 解上三角方程，用法：x = solveUpperTriangular(A,b)
-Matrix solveUpperTriangular(const Matrix &A, const Matrix &b){
+Matrix solveUpperTriangular(const Matrix &A, const Matrix &b, int bandwidth){
     Matrix x = b;
     int n = A.n;
     for(int i = n-1; i >= 0; i--){
         x(i, 0) /= A(i, i);
-        for(int j = 0; j < i; j++)
-            x(j, 0) -= x(i, 0) * A(j, i);
+        if(bandwidth == -1){
+            for(int j = 0; j < i; j++)
+                x(j, 0) -= x(i, 0) * A(j, i);
+        } else {
+            for(int j = std::max(i - bandwidth, 0); j < i; j++)
+                x(j, 0) -= x(i, 0) * A(j, i);
+        }
     }
     return x;
 }
@@ -1352,6 +1374,22 @@ double norm(const ColVector &x, int p = 2){
     else if(p == 1) return sum(abs(x));
     else if(p == 2) return sqrt(x.sqrsum());
     else return -1;
+}
+
+Matrix tril(const Matrix &A, int d = 0){
+    Matrix B = zeros(A.n, A.m);
+    for(int i = 0; i < A.n; i++)
+        for(int j = 0; j < A.m && j <= i + d; j++)
+            B(i,j) = A(i,j);
+    return B;
+}
+
+Matrix triu(const Matrix &A, int d = 0){
+    Matrix B = zeros(A.n, A.m);
+    for(int i = 0; i < A.n; i++)
+        for(int j = i + d; j < A.m; j++)
+            B(i,j) = A(i,j);
+    return B;
 }
 
 #endif

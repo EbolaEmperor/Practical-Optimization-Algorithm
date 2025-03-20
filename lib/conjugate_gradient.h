@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include "linear_search.h"
 #include "derivation.h"
+#include "preconditioner.h"
 #include <iostream>
 
 /***************************************************************
@@ -35,18 +36,18 @@ Matrix CG(const Matrix &A, const Matrix &b, Matrix x, const double err = 1e-6){
  * 调用PCG(A,b,x,M,err)即可，其中x为初始迭代位置, M是预优因子
  *
  **************************************************************/
-Matrix PCG(const Matrix &A, const Matrix &b, Matrix x, Matrix M, const double err = 1e-6){
-    Matrix r = A*x-b, y = solve(M,r), p = -y;
+Matrix PCG(const Matrix &A, const Matrix &b, Matrix x, const Preconditioner &P, const double err = 1e-6){
+    Matrix r = A*x-b, y = P.vmult(r), p = -y;
     long long step = 0;
     while(r.vecnorm(2) >= err){
         step++;
-        double alpha = value(r.T()*y) / value(p.T()*A*p);
-        x = x + alpha*p;
-        double tmp = value(r.T()*y);
-        r = r + alpha*A*p;
-        y = solve(M,r);
-        double beta = value(r.T()*y) / tmp;
-        p = -y + beta*p;
+        double tmp = value(r.T() * y);
+        double alpha = tmp / value(p.T() * A * p);
+        x = x + alpha * p;
+        r = r + alpha * (A * p);
+        y = P.vmult(r);
+        double beta = value(r.T() * y) / tmp;
+        p = -y + beta * p;
     }
     std::cout << "Steps: " << step << std::endl;
     return x;
