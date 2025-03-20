@@ -83,6 +83,7 @@ public:
 #include <algorithm>
 #include <iostream>
 #include <cstring>
+#include <unordered_map>
 using namespace std;
 
 SparseMatrix::SparseMatrix(){
