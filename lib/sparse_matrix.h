@@ -68,6 +68,15 @@ public:
 
     friend ColVector solveLowerTriangular(const SparseMatrix &L, const ColVector &b, int bandwidth);
     friend ColVector solveUpperTriangular(const SparseMatrix &U, const ColVector &b, int bandwidth);
+
+    ColVector GaussSeidel(ColVector x, const ColVector & b) const;
+
+    SparseMatrix operator * (const SparseMatrix &rhs) const;
+    std::vector<int> nonzeroIndexInRow(const int &r) const;
+    std::vector<double> nonzeroValueInRow(const int &r) const;
+    double density() const;
+
+    double operator () (const int &i, const int &j) const;
 };
 
 #include <vector>
@@ -190,12 +199,12 @@ SparseMatrix SparseMatrix::operator - (const SparseMatrix &rhs) const{
 }
 
 ColVector SparseMatrix::operator * (const ColVector & rhs) const{
-    if(m!=rhs.n){
+    if(nCols() != rhs.size()){
         cerr << "[Error] The columns of SparseMatrix does not coincide the rows of ColVector!" << endl;
         exit(-1);
     }
-    ColVector res(rhs.n);
-    for(int i = 0; i < rhs.n; i++){
+    ColVector res(nRows());
+    for(int i = 0; i < res.size(); i++){
         for(int j = row_index[i]; j < row_index[i+1]; j++)
             res(i) += elements[j].value * rhs(elements[j].j);
     }
@@ -203,12 +212,12 @@ ColVector SparseMatrix::operator * (const ColVector & rhs) const{
 }
 
 RowVector operator * (const RowVector & lhs, const SparseMatrix &A){
-    if(A.n!=lhs.m){
+    if(A.nRows() != lhs.size()){
         cerr << "[Error] The rows of SparseMatrix does not coincide the columns of RowVector!" << endl;
         exit(-1);
     }
-    RowVector res(lhs.n);
-    for(int i = 0; i < lhs.n; i++){
+    RowVector res(A.nCols());
+    for(int i = 0; i < lhs.size(); i++){
         for(int j = A.row_index[i]; j < A.row_index[i+1]; j++)
             res(A.elements[j].j) += A.elements[j].value * lhs(i);
     }
@@ -343,6 +352,65 @@ ColVector solveUpperTriangular(const SparseMatrix &U, const ColVector &b, int ba
             exit(-1);
         }
         x(i) = (b(i) - sum) / diagonal;
+    }
+    return x;
+}
+
+double SparseMatrix::density() const{
+    return (double)size/((double)n*m);
+}
+
+SparseMatrix SparseMatrix::operator * (const SparseMatrix &rhs) const{
+    unordered_map<long long, double> f;
+    for(int i = 0; i < n; i++)
+        for(int c = row_index[i]; c < row_index[i+1]; c++){
+            int k = elements[c].j;
+            for(int s = rhs.row_index[k]; s < rhs.row_index[k+1]; s++){
+                f[ 1ll*i*rhs.m + rhs.elements[s].j ] += elements[c].value * rhs.elements[s].value;
+            }
+        }
+    vector<Triple> elem;
+    for(auto p : f){
+    	if(fabs(p.second)<1e-16) continue;
+        int r = p.first / rhs.m;
+        int c = p.first - 1ll*rhs.m*r;
+        elem.push_back(Triple(r,c,p.second));
+    }
+    return SparseMatrix(n, rhs.m, elem);
+}
+
+double SparseMatrix::operator () (const int &i, const int &j) const{
+    for(int c = row_index[i]; c < row_index[i+1]; c++){
+        if(elements[c].j == j){
+            return elements[c].value;
+        } else if(elements[c].j > j){
+            break;
+        }
+    }
+    return 0;
+}
+
+vector<int> SparseMatrix::nonzeroIndexInRow(const int &r) const{
+    vector<int> p;
+    for(int c = row_index[r]; c < row_index[r+1]; c++)
+        p.push_back(elements[c].j);
+    return p;
+}
+
+vector<double> SparseMatrix::nonzeroValueInRow(const int &r) const{
+    vector<double> p;
+    for(int c = row_index[r]; c < row_index[r+1]; c++)
+        p.push_back(elements[c].value);
+    return p;
+}
+
+ColVector SparseMatrix::GaussSeidel(ColVector x, const ColVector &b) const{
+    for(int i = 0; i < n; i++){
+        double coef = 0, sum = 0;
+        for(int c = row_index[i]; c < row_index[i+1]; c++)
+            if(elements[c].j!=i) sum += elements[c].value * x(elements[c].j);
+            else coef = elements[c].value;
+        x(i) = (b(i) - sum) / coef;
     }
     return x;
 }
