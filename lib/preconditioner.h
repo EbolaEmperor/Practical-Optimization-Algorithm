@@ -43,13 +43,11 @@ template <typename Mat>
 class JORPreconditioner : public Preconditioner{
 private:
     ColVector d;
-    int bandwidth;
     double omega;
 
 public:
-    JORPreconditioner(const Mat &A, double omega = 1.0, int bandwidth = -1)
-      : bandwidth(bandwidth), 
-        omega(omega), 
+    JORPreconditioner(const Mat &A, double omega = 1.0)
+      : omega(omega), 
         d(diag(A)) {}
 
     ColVector vmult(const ColVector &b) const{
