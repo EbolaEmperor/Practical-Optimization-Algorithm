@@ -39,7 +39,7 @@ private:
 
     ColVector wJacobi(const ColVector &x, const ColVector &b, double w = 0.8) const{
         int n = sqrt(x.size());
-        ColVector new_x(n * n);
+        ColVector middle_x(n * n);
         for(int i = 0; i < n; i++)
             for(int j = 0; j < n; j++){
                 double sum = 0;
@@ -47,9 +47,32 @@ private:
                 if(i < n - 1) sum += x[(i+1)*n + j];
                 if(j > 0) sum += x[i*n + j - 1];
                 if(j < n - 1) sum += x[i*n + j + 1];
-                new_x[i*n + j] = (1 - w) * x[i*n + j] + w * (b[i*n + j] + sum) / 4;
+                middle_x[i*n + j] = (1 - w) * x[i*n + j] + w * (b[i*n + j] + sum) / 4;
             }
-        return new_x;
+        return middle_x;
+    }
+
+    void SSOR(ColVector &x, const ColVector &b, double w = 1.0) const{
+        int n = sqrt(x.size());
+        ColVector middle_x(n * n);
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++){
+                double sum = 0;
+                if(i > 0) sum += middle_x[(i-1)*n + j];
+                if(i < n - 1) sum += x[(i+1)*n + j];
+                if(j > 0) sum += middle_x[i*n + j - 1];
+                if(j < n - 1) sum += x[i*n + j + 1];
+                middle_x[i*n + j] = (1 - w) * x[i*n + j] + w * (b[i*n + j] + sum) / 4;
+            }
+        for(int i = n - 1; i >= 0; i--)
+            for(int j = n - 1; j >= 0; j--){
+                double sum = 0;
+                if(i > 0) sum += middle_x[(i-1)*n + j];
+                if(i < n - 1) sum += x[(i+1)*n + j];
+                if(j > 0) sum += middle_x[i*n + j - 1];
+                if(j < n - 1) sum += x[i*n + j + 1];
+                x[i*n + j] = (1 - w) * middle_x[i*n + j] + w * (b[i*n + j] + sum) / 4;
+            }
     }
 
 public:
