@@ -69,17 +69,22 @@ int main(int argc, char * argv[]){
         cout << "---------------------------------" << endl;
     } 
     else {
-        cout << "--------- 2D Laplacian with AMG ----------" << endl;
+        if(testID == 3)
+            cout << "--------- 2D Laplacian with MG -----------" << endl;
+        else
+            cout << "--------- 2D Laplacian with AMG ----------" << endl;
         cout << "Grid size: " << n << " x " << n << endl;
         auto B = getLaplacian2D(n);
 
         cout << "\e[1;32mPreparing\e[0m preconditioner..." << endl;
-        auto Q = AMGPreconditioner(B);
+        Preconditioner* Q = (testID == 3) ? 
+                            (Preconditioner*) new Lap2DMGPreconditioner(n) : 
+                            (Preconditioner*) new AMGPreconditioner(B);
         
         int timest = clock();
         cout << "\e[1;32mRunning\e[0m PCG Iteration..." << endl;
         ColVector b2 = ones(n * n, 1);
-        ColVector x2 = PCG(B, b2, zeros(n * n, 1), Q, eps);
+        ColVector x2 = PCG(B, b2, zeros(n * n, 1), *Q, eps);
         cout << "Residule: " << norm(B * x2 - b2) << endl;
         cout << "PCG running time: " << std::setprecision(3) << (double)(clock()-timest)/CLOCKS_PER_SEC << "s" << endl;
         cout << std::setprecision(6);

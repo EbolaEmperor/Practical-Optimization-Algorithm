@@ -23,7 +23,8 @@ private:
         ColVector y(m * m);
         for(int i = 0; i < m; i++)
             for(int j = 0; j < m; j++)
-                y(i*m + j) = x(2*i*n + 2*j) / 4 + x(2*i*n + 2*j + 1) / 4 + x((2*i + 1)*n + 2*j) / 4 + x((2*i + 1)*n + 2*j + 1) / 4;
+                y(i*m + j) = ( x(2*i*n + 2*j) + x(2*i*n + 2*j + 1) 
+                             + x((2*i + 1)*n + 2*j) + x((2*i + 1)*n + 2*j + 1) );
         return y;
     }
 
@@ -71,24 +72,15 @@ public:
             Matrix A = getLaplacian2D(n);
             return solve(A, b);
         }
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < 4; i++)
             x = wJacobi(x, b);
         ColVector e2 = VCycle(zeros(n / 2 * n / 2, 1), 
                               restriction(b - vmult(x), n), 
                               n / 2);
         x = x + prolongation(e2, n / 2);
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < 4; i++)
             x = wJacobi(x, b);
         return x;
-    }
-
-    ColVector FMGCycle(const ColVector &b, int n) const{
-        if(n <= 4){
-            Matrix A = getLaplacian2D(n);
-            return solve(A, b);
-        }
-        auto x0 = FMGCycle(restriction(b, n), n / 2);
-        return VCycle(prolongation(x0, n / 2), b, n);
     }
 };
 
