@@ -498,6 +498,16 @@ double max(const Matrix &A){
     return res;
 }
 
+// 矩阵求最小值函数，返回矩阵中的最大元素，用法：x=min(A)
+double min(const Matrix &A){
+    if(A.m==0 || A.n==0) return 0;
+    double res = A(0, 0);
+    for(int i = 0; i < A.n; i++)
+        for(int j = 0; j < A.m; j++)
+            res = std::min(res, A(i, j));
+    return res;
+}
+
 // 矩阵求和函数，返回所有元素的和，用法：s=sum(A)
 double sum(const Matrix &A){
     double res = 0;

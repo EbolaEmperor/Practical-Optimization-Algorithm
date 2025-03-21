@@ -3,6 +3,7 @@
 #include "lib/amg.h"
 #include "lib/mg_lap2d.h"
 #include "lib/sparse_matrix.h"
+#include "lib/pnglib.h"
 using namespace std;
 
 Matrix getLaplacian1D(int n){
@@ -29,6 +30,20 @@ SparseMatrix getLaplacian2D(int n){
     return SparseMatrix(n * n, n * n, vec);
 }
 
+double f(double x, double y){
+    if(x + y < 1) return 1;
+    return -1;
+}
+
+ColVector discreteF(int n){
+    double h = 1.0 / (n + 1);
+    ColVector fvec(n * n);
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < n; j++)
+            fvec(i * n + j) = f((i + 1) * h, (j + 1) * h);
+    return fvec;
+}
+
 int main(int argc, char * argv[]){
     if(argc != 3){
         cout << "Usage: " << argv[0] << " <testID> <n>" << endl;
@@ -46,13 +61,14 @@ int main(int argc, char * argv[]){
         SSORPreconditioner P(A, 1.99999999, 1);
 
         cout << "\e[1;32mRunning\e[0m PCG Iteration..." << endl;
-        ColVector b = ones(n, 1);
+        double h = 1.0 / (n + 1);
+        ColVector b = ones(n, 1) * h;
         ColVector x = PCG(A, b, zeros(n, 1), P, eps);
         cout << "Residule: " << norm(A * x - b) << endl;
         cout << "---------------------------------" << endl;
     } 
     else if(testID == 2){
-        cout << "--------- 2D Laplacian ----------" << endl;
+        cout << "--------- SSOR-Preconditioned CG For 2D Laplacian ----------" << endl;
         cout << "Grid size: " << n << " x " << n << endl;
         auto B = getLaplacian2D(n);
         double phoB = cos(M_PI  / (n + 1));
@@ -63,16 +79,18 @@ int main(int argc, char * argv[]){
         auto Q = SSORPreconditioner(B, omega);
 
         cout << "\e[1;32mRunning\e[0m PCG Iteration..." << endl;
-        ColVector b2 = ones(n * n, 1);
+        double h = 1.0 / (n + 1);
+        ColVector b2 = discreteF(n) * (h * h);
         ColVector x2 = PCG(B, b2, zeros(n * n, 1), Q, eps);
         cout << "Residule: " << norm(B * x2 - b2) << endl;
-        cout << "---------------------------------" << endl;
+        pcolor("heatmap.png", x2.reshape(n, n));
+        cout << "------------------------------------------------------------" << endl;
     } 
     else {
         if(testID == 3)
-            cout << "--------- 2D Laplacian with MG -----------" << endl;
+            cout << "--------- MG-Preconditioned CG For 2D Laplacian -----------" << endl;
         else
-            cout << "--------- 2D Laplacian with AMG ----------" << endl;
+            cout << "--------- AMG-Preconditioned CG For 2D Laplacian ----------" << endl;
         cout << "Grid size: " << n << " x " << n << endl;
         auto B = getLaplacian2D(n);
 
@@ -83,12 +101,14 @@ int main(int argc, char * argv[]){
         
         int timest = clock();
         cout << "\e[1;32mRunning\e[0m PCG Iteration..." << endl;
-        ColVector b2 = ones(n * n, 1);
+        double h = 1.0 / (n + 1);
+        ColVector b2 = discreteF(n) * (h * h);
         ColVector x2 = PCG(B, b2, zeros(n * n, 1), *Q, eps);
         cout << "Residule: " << norm(B * x2 - b2) << endl;
         cout << "PCG running time: " << std::setprecision(3) << (double)(clock()-timest)/CLOCKS_PER_SEC << "s" << endl;
         cout << std::setprecision(6);
-        cout << "------------------------------------------" << endl;
+        pcolor("heatmap.png", x2.reshape(n, n));
+        cout << "-----------------------------------------------------------" << endl;
     }
     return 0;
 }
