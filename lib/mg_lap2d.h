@@ -105,6 +105,15 @@ public:
             x = wJacobi(x, b);
         return x;
     }
+
+    ColVector FMGCycle(const ColVector &b, int n) const{
+        if(n <= 4){
+            Matrix A = getLaplacian2D(n);
+            return solve(A, b);
+        }
+        ColVector x0 = FMGCycle(restriction(b, n), n / 2);
+        return VCycle(prolongation(x0, n / 2), b, n);
+    }
 };
 
 
@@ -117,6 +126,6 @@ public:
     Lap2DMGPreconditioner(int n) : n(n) {}
 
     ColVector vmult(const ColVector &b) const{
-        return solver.VCycle(zeros(n * n, 1), b, n);
+        return solver.FMGCycle(b, n);
     }
 };

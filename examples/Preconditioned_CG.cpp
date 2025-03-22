@@ -31,8 +31,12 @@ SparseMatrix getLaplacian2D(int n){
 }
 
 double f(double x, double y){
-    if(x + y < 1) return 1;
-    return -1;
+    if(x > 0.48 && x < 0.52 && y > 0.48 && y < 0.52) return 1;
+    if(x > 0.23 && x < 0.27 && y > 0.23 && y < 0.27) return 1;
+    if(x > 0.73 && x < 0.77 && y > 0.73 && y < 0.77) return 1;
+    if(x > 0.23 && x < 0.27 && y > 0.73 && y < 0.77) return -1;
+    if(x > 0.73 && x < 0.77 && y > 0.23 && y < 0.27) return -1;
+    return 0;
 }
 
 ColVector discreteF(int n){
