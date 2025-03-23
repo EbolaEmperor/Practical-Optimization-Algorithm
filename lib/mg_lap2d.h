@@ -37,6 +37,38 @@ private:
         return y;
     }
 
+    ColVector prolongationLinear(const ColVector &x, int n) const{
+        ColVector y(4 * n * n);
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++){
+                y[2*i*2*n + 2*j] += x[i*n + j] * 4 / 9;
+                y[2*i*2*n + 2*j + 1] += x[i*n + j] * 4 / 9;
+                y[(2*i + 1)*2*n + 2*j] += x[i*n + j] * 4 / 9;
+                y[(2*i + 1)*2*n + 2*j + 1] += x[i*n + j] * 4 / 9;
+                if(i > 0){
+                    y[(2*i-1)*2*n + 2*j] += x[i*n + j] * 2 / 9;
+                    y[(2*i-1)*2*n + 2*j + 1] += x[i*n + j] * 2 / 9;
+                }
+                if(i < n - 1){
+                    y[(2*i+2)*2*n + 2*j] += x[i*n + j] * 2 / 9;
+                    y[(2*i+2)*2*n + 2*j + 1] += x[i*n + j] * 2 / 9;
+                }
+                if(j > 0){
+                    y[2*i*2*n + 2*j - 1] += x[i*n + j] * 2 / 9;
+                    y[(2*i+1)*2*n + 2*j - 1] += x[i*n + j] * 2 / 9;
+                }
+                if(j < n - 1){
+                    y[2*i*2*n + 2*j + 2] += x[i*n + j] * 2 / 9;
+                    y[(2*i+1)*2*n + 2*j + 2] += x[i*n + j] * 2 / 9;
+                }
+                if(i > 0 && j > 0) y[(2*i-1)*2*n + 2*j - 1] += x[i*n + j] / 9;
+                if(i > 0 && j < n - 1) y[(2*i-1)*2*n + 2*j + 2] += x[i*n + j] / 9;
+                if(i < n - 1 && j > 0) y[(2*i+2)*2*n + 2*j - 1] += x[i*n + j] / 9;
+                if(i < n - 1 && j < n - 1) y[(2*i+2)*2*n + 2*j + 2] += x[i*n + j] / 9;
+            }
+        return y;
+    }
+
     ColVector wJacobi(const ColVector &x, const ColVector &b, double w = 0.8) const{
         int n = sqrt(x.size());
         ColVector middle_x(n * n);
