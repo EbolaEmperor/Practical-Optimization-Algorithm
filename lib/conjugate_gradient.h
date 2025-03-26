@@ -40,15 +40,18 @@ template <typename Mat>
 ColVector PCG(const Mat &A, const ColVector &b, ColVector x, const Preconditioner &P, const double err = 1e-6){
     ColVector r = A * x - b, y = P.vmult(r), p = -y;
     long long step = 0;
+    double dotry = dot(r, y);
     while(r.vecnorm(2) >= err){
         step++;
-        double tmp = dot(r, y);
-        double alpha = tmp / dot(p, A * p);
-        x = x + alpha * p;
-        r = r + alpha * (A * p);
+        auto Ap = A * p;
+        double alpha = dotry / dot(p, Ap);
+        x += alpha * p;
+        r += alpha * Ap;
         y = P.vmult(r);
-        double beta = dot(r, y) / tmp;
-        p = -y + beta * p;
+        double tmp = dotry;
+        dotry = dot(r, y);
+        double beta = dotry / tmp;
+        (p *= beta) -= y;
     }
     std::cout << "PCG Steps: " << step << std::endl;
     return x;

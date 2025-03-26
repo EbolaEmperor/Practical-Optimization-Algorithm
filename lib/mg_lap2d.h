@@ -132,7 +132,7 @@ public:
         ColVector e2 = VCycle(zeros(n / 2 * n / 2, 1), 
                               restriction(b - vmult(x), n), 
                               n / 2);
-        x = x + prolongation(e2, n / 2);
+        x += prolongation(e2, n / 2);
         for(int i = 0; i < 4; i++)
             x = wJacobi(x, b);
         return x;

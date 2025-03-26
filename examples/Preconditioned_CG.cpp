@@ -3,11 +3,12 @@
 #include "lib/amg.h"
 #include "lib/mg_lap2d.h"
 #include "lib/sparse_matrix.h"
+#include "lib/band_matrix.h"
 #include "lib/pnglib.h"
 using namespace std;
 
-Matrix getLaplacian1D(int n){
-    Matrix A(n, n);
+BandMatrix<1> getLaplacian1D(int n){
+    BandMatrix<1> A(n);
     for(int i = 0; i < n; i++){
         A(i, i) = 2;
         if(i > 0) A(i, i - 1) = -1;
@@ -61,8 +62,8 @@ int main(int argc, char * argv[]){
         cout << "--------- 1D Laplacian ----------" << endl;
         cout << "Grid size: " << n << endl;
         cout << "\e[1;32mPreparing\e[0m preconditioner..." << endl;
-        Matrix A = getLaplacian1D(n);
-        SSORPreconditioner P(A, 1.99999999, 1);
+        auto A = getLaplacian1D(n);
+        SSORPreconditioner P(A, 2 - 1e-12);
 
         cout << "\e[1;32mRunning\e[0m PCG Iteration..." << endl;
         double h = 1.0 / (n + 1);

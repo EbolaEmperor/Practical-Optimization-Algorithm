@@ -44,6 +44,8 @@ public:
     SparseMatrix(const int &_n, const int &_m, std::vector<Triple> ele);
     SparseMatrix(const int &_n, const int &_m)
         : SparseMatrix(_n, _m, makeDiagTripleVector(_n)) {}
+    SparseMatrix(const int &_n)
+        : SparseMatrix(_n, _n, makeDiagTripleVector(_n)) {}
     SparseMatrix(const SparseMatrix & rhs);
     ~SparseMatrix();
 

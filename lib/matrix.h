@@ -131,6 +131,9 @@ public:
     void sort();
     const double operator ()(const int &x) const;
     double & operator () (const int &x);
+    ColVector& operator += (const ColVector &rhs);
+    ColVector& operator -= (const ColVector &rhs);
+    ColVector& operator *= (const double k);
     ColVector operator + (const ColVector &rhs) const;
     ColVector operator - (const ColVector &rhs) const;
     ColVector operator - () const;
@@ -971,6 +974,30 @@ double & ColVector::operator () (const int &x){
 
 int ColVector::size() const{
     return n;
+}
+
+ColVector& ColVector::operator += (const ColVector &rhs){
+    if(n != rhs.n){
+        std::cerr << "ColVector Addition Error!" << std::endl;
+    }
+    for(int i = 0; i < n; i++)
+        a[i] += rhs.a[i];
+    return *this;
+}
+
+ColVector& ColVector::operator -= (const ColVector &rhs){
+    if(n != rhs.n){
+        std::cerr << "ColVector Addition Error!" << std::endl;
+    }
+    for(int i = 0; i < n; i++)
+        a[i] -= rhs.a[i];
+    return *this;
+}
+
+ColVector& ColVector::operator *= (const double k){
+    for(int i = 0; i < n; i++)
+        a[i] *= k;
+    return *this;
 }
 
 ColVector ColVector::operator + (const ColVector &rhs) const{

@@ -19,7 +19,7 @@ ColVector newton(double (*f)(const ColVector&), ColVector (*grad)(const ColVecto
     while(grad(current).vecnorm(2)>eps){
         step++;
         ColVector searchDirection = solveByLDL(hessian(current), -grad(current));
-        current = current + searchDirection;
+        current += searchDirection;
         //std::cout << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
         // 这是用于输出每一步迭代信息的测试语句，可以删除
     }
@@ -42,7 +42,7 @@ ColVector newton_gradfree(double (*f)(const ColVector&), ColVector current, cons
         ColVector grad = gradient(f, current);
         if(grad.vecnorm(2)<=eps) break;
         ColVector searchDirection = solveByLDL(hesse(f,current), -grad);
-        current = current + searchDirection;
+        current += searchDirection;
 #ifdef debug
         std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
 #endif
@@ -67,7 +67,7 @@ Matrix newton_wolfe(double (*f)(const ColVector&), ColVector (*grad)(const ColVe
         ColVector searchDirection = solveByLDL(hessian(current), -grad(current));
         searchDirection = 1.0/searchDirection.vecnorm(2) * searchDirection;
         double lambda = wolfe_powell(f,grad,current,searchDirection,rho,sigma,eps);
-        current = current + lambda * searchDirection;
+        current += lambda * searchDirection;
         //std::cout << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
         // 这是用于输出每一步迭代信息的测试语句，可以删除
     }
@@ -84,7 +84,7 @@ Matrix newton_gillmurray(double (*f)(const ColVector&), ColVector (*grad)(const 
         ColVector searchDirection = solveByLDL_GM(hessian(current), -grad(current));
         searchDirection = 1.0/searchDirection.vecnorm(2) * searchDirection;
         double lambda = wolfe_powell(f,grad,current,searchDirection,rho,sigma,eps);
-        current = current + searchDirection;
+        current += searchDirection;
         std::cout << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
         // 这是用于输出每一步迭代信息的测试语句，可以删除
     }

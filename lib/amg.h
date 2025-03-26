@@ -220,7 +220,7 @@ ColVector amgSolver::VC(const int &d, ColVector x, const ColVector &rhs) const{
     for(int i = 0; i < AMG_SMOOTH_ITER; i++){
         x = Ah[d].GaussSeidel(x, rhs);
     }
-    x = x + Ph[d] * VC(d+1, zeros(Rh[d].nRows(),1), Rh[d]*(rhs-Ah[d]*x));
+    x += Ph[d] * VC(d+1, zeros(Rh[d].nRows(),1), Rh[d]*(rhs-Ah[d]*x));
     for(int i = 0; i < AMG_SMOOTH_ITER; i++){
         x = Ah[d].GaussSeidel(x, rhs);
     }
