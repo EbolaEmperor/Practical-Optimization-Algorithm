@@ -1,7 +1,7 @@
 /***************************************************************
  *
  * 这是一个矩阵运算库，为了方便以后设计算法更加简洁，特编写以用
- * 版本号：v1.1.0
+ * 版本号：v1.1.1
  * 
  * copyright © 2023 Wenchong Huang, All rights reserved.
  *
@@ -1267,8 +1267,7 @@ Matrix Matrix::realSchur() const{
         l--;
         auto p = H.getSubmatrix(l+1,n-m, l+1,n-m).doubleQR();
         H.setSubmatrix(l+1,l+1, std::move(p.first));
-        Matrix E = eye(n), P = std::move(p.second);
-        E.setSubmatrix(l+1,l+1, P);
+        Matrix P = std::move(p.second);
         if(l>=0) H.setSubmatrix(0,l+1, H.getSubmatrix(0,l,l+1,n-m)*P);
         if(m>1) H.setSubmatrix(l+1,n-m+1, P.T()*H.getSubmatrix(l+1,n-m,n-m+1,n-1));
     }
@@ -1278,82 +1277,147 @@ Matrix Matrix::realSchur() const{
     return H;
 }
 
-std::pair<Matrix,Matrix> Matrix::doubleQR() const{
-    if(n <= 2){
-        // 对于2*2的矩阵，无法使用双重步隐式QR迭代，遂使用位移QR迭代
-        double mu = element(n-1,n-1);
-        Matrix H = (*this) - mu*eye(n);
+std::pair<Matrix, Matrix> Matrix::doubleQR() const {
+    if (n <= 2) {
+        // 对于 2×2 的矩阵，使用位移QR迭代
+        double mu = element(n - 1, n - 1);
+        Matrix H = (*this) - mu * eye(n);
         auto [Q, R] = H.getQR();
         return std::make_pair(R * Q + mu * eye(n), Q);
     }
     Matrix P = eye(n), H = (*this);
-    double mm = n-1;
-    double s = H(mm-1,mm-1) + H(n-1,n-1);
-    double t = H(mm-1,mm-1)*H(n-1,n-1) - H(mm-1,n-1)*H(n-1,mm-1);
-    double x = H(0,0)*H(0,0) + H(0,1)*H(1,0) - s*H(0,0) + t;
-    double y = H(1,0) * (H(0,0)+H(1,1)-s);
-    double z = H(1,0)*H(2,1);
-    for(int k = 0; k < n-2; k++){
+    double mm = n - 1;
+    double s = H(mm - 1, mm - 1) + H(n - 1, n - 1);
+    double t = H(mm - 1, mm - 1) * H(n - 1, n - 1) - H(mm - 1, n - 1) * H(n - 1, mm - 1);
+    double x = H(0, 0) * H(0, 0) + H(0, 1) * H(1, 0) - s * H(0, 0) + t;
+    double y = H(1, 0) * (H(0, 0) + H(1, 1) - s);
+    double z = H(1, 0) * H(2, 1);
+    for (int k = 0; k < n - 2; k++) {
         ColVector tmpc(3);
-        tmpc(0)=x; tmpc(1)=y; tmpc(2)=z;
-        auto p = tmpc.householder();
-        int q = std::max(0, k-1);
-        Matrix Pk = eye(3) - p.second*(p.first*p.first.T());
-        H.setSubmatrix(k,q, Pk*H.getSubmatrix(k,k+2,q,n-1));
-        int r = std::min(k+3,n-1);
-        H.setSubmatrix(0,k, H.getSubmatrix(0,r,k,k+2)*Pk);
-        x = H(k+1, k);
-        y = H(k+2, k);
-        if(k < n-3) z = H(k+3, k);
-        Matrix E = eye(n);
-        E.setSubmatrix(k,k,Pk);
-        P = P * E;
+        tmpc(0) = x; tmpc(1) = y; tmpc(2) = z;
+        auto hh = tmpc.householder();  // hh.first 为 v, hh.second 为 beta
+
+        // 左更新：更新 H 的行 k 至 k+2，列 q 至 n-1，其中 q = max(0, k-1)
+        int q = (k - 1 >= 0) ? (k - 1) : 0;
+        Matrix subL = H.getSubmatrix(k, k + 2, q, n - 1);
+        Matrix vtSubL = (hh.first.T()) * subL;
+        Matrix updateL = hh.second * (hh.first * vtSubL);
+        subL = subL - updateL;
+        H.setSubmatrix(k, q, subL);
+
+        // 右更新：更新 H 的行 0 至 r，列 k 至 k+2，其中 r = min(k+3, n-1)
+        int r = std::min(k + 3, n - 1);
+        Matrix subR = H.getSubmatrix(0, r, k, k + 2);
+        Matrix subR_v = subR * hh.first;
+        Matrix updateR = hh.second * (subR_v * (hh.first.T()));
+        subR = subR - updateR;
+        H.setSubmatrix(0, k, subR);
+
+        // 更新 bulge
+        x = H(k + 1, k);
+        y = H(k + 2, k);
+        if (k < n - 3)
+            z = H(k + 3, k);
+
+        // 更新累计正交矩阵 P：仅更新 P 的列 k 至 k+2 (共 3 列)
+        Matrix P_block = P.getSubmatrix(0, n - 1, k, k + 2);
+        Matrix P_block_v = P_block * hh.first;
+        Matrix updateP = hh.second * (P_block_v * (hh.first.T()));
+        P_block = P_block - updateP;
+        P.setSubmatrix(0, k, P_block);
     }
+    // 对最后 2×2 区块应用 Householder 反射
     ColVector tmpc(2);
-    tmpc(0)=x; tmpc(1)=y;
-    auto p = tmpc.householder();
-    Matrix Pk = eye(2) - p.second*(p.first*p.first.T());
-    H.setSubmatrix(n-2,n-3, Pk*H.getSubmatrix(n-2,n-1,n-3,n-1));
-    H.setSubmatrix(0,n-2, H.getSubmatrix(0,n-1,n-2,n-1)*Pk);
-    Matrix E = eye(n);
-    E.setSubmatrix(n-2,n-2,Pk);
-    P = P * E;
-    for(int k = 2; k < n; k++)
-        for(int j = 0; j < k-1; j++)
-            H(k,j) = 0;
-    return std::make_pair(H,P);
-}
+    tmpc(0) = x; tmpc(1) = y;
+    auto hh = tmpc.householder();
+    // 左更新：更新 H 的行 n-2 至 n-1，列 n-3 至 n-1
+    Matrix subL = H.getSubmatrix(n - 2, n - 1, n - 3, n - 1);
+    Matrix vtSubL = (hh.first.T()) * subL;
+    Matrix updateL = hh.second * (hh.first * vtSubL);
+    subL = subL - updateL;
+    H.setSubmatrix(n - 2, n - 3, subL);
+    // 右更新：更新 H 的行 0 至 n-1，列 n-2 至 n-1
+    Matrix subR = H.getSubmatrix(0, n - 1, n - 2, n - 1);
+    Matrix subR_v = subR * hh.first;
+    Matrix updateR = hh.second * (subR_v * (hh.first.T()));
+    subR = subR - updateR;
+    H.setSubmatrix(0, n - 2, subR);
+    // 更新累计正交矩阵 P 的最后 2 列
+    Matrix P_block = P.getSubmatrix(0, n - 1, n - 2, n - 1);
+    Matrix P_block_v = P_block * hh.first;
+    Matrix updateP = hh.second * (P_block_v * (hh.first.T()));
+    P_block = P_block - updateP;
+    P.setSubmatrix(0, n - 2, P_block);
 
-std::pair<Matrix,Matrix> Matrix::getQR() const{
-    Matrix Q = eye(n), A = (*this);
-    for(int j = 0; j < m; j++){
-        if(j >= n) break;
-        auto p = A.getSubmatrix(j,n-1,j,j).householder();
-        auto H = eye(n-j) - p.second*(p.first*p.first.T());
-        A.setSubmatrix(j,j, H*A.getSubmatrix(j,n-1,j,m-1));
-        auto E = eye(n);
-        E.setSubmatrix(j,j,H);
-        Q = Q * E;
+    // 将 H 中主对角线以下超过一条次对角线的部分置零
+    for (int i = 2; i < n; i++) {
+        for (int j = 0; j < i - 1; j++) {
+            H(i, j) = 0;
+        }
     }
-    return std::make_pair(Q, A);
+    return std::make_pair(H, P);
 }
 
-std::pair<Matrix,Matrix> Matrix::hessenberg() const{
-    Matrix A = (*this);
+std::pair<Matrix, Matrix> Matrix::getQR() const {
+    int r = n, c = m;
     Matrix Q = eye(n);
-    for(int k = 0; k < n-2; k++){
-        auto p = A.getSubmatrix(k+1,n-1,k,k).householder();
-        Matrix Hk = eye(n-k-1) - p.second*(p.first*p.first.T());
-        A.setSubmatrix(k+1,k, Hk*A.getSubmatrix(k+1,n-1,k,n-1));
-        A.setSubmatrix(0,k+1, A.getSubmatrix(0,n-1,k+1,n-1)*Hk);
-        Matrix E = eye(n);
-        E.setSubmatrix(k+1,k+1,Hk);
-        Q = Q * E;
+    Matrix R = (*this);
+    // 只对 j=0,...,min(n-1, m-1) 进行反射
+    int lim = std::min(n, m);
+    for (int j = 0; j < lim; j++) {
+        // 取 R 的子向量：第 j 列，从行 j 到 n-1
+        ColVector x = R.getSubmatrix(j, n - 1, j, j);  // 尺寸为 (n-j)×1
+        auto [v, beta] = x.householder();
+        
+        // 更新 R: R(j:n-1, j:m-1) = R(j:n-1, j:m-1) - beta * v * (v^T * R(j:n-1, j:m-1))
+        Matrix subR = R.getSubmatrix(j, n - 1, j, m - 1);
+        Matrix temp = (v.T()) * subR; // 1×(m-j) 行向量
+        subR = subR - beta * (v * temp);
+        R.setSubmatrix(j, j, subR);
+        
+        // 更新 Q: Q(:, j:n-1) = Q(:, j:n-1) - beta * (Q(:, j:n-1) * v) * v^T
+        Matrix subQ = Q.getSubmatrix(0, n - 1, j, n - 1);
+        Matrix tempQ = subQ * v;  // (n×1) 列向量
+        subQ = subQ - beta * (tempQ * (v.T()));
+        Q.setSubmatrix(0, j, subQ);
     }
-    for(int k = 2; k < n; k++)
-        for(int j = 0; j < k-1; j++)
-            A(k,j) = 0;
-    return std::make_pair(A,Q);
+    return std::make_pair(Q, R);
+}
+
+std::pair<Matrix, Matrix> Matrix::hessenberg() const {
+    Matrix H = (*this);
+    Matrix Q = eye(n);
+    // 对于 k = 0,..., n-3 进行 Householder 消去
+    for (int k = 0; k < n - 2; k++) {
+        // 提取子向量：从第 k+1 行至 n-1 行，第 k 列
+        ColVector x = H.getSubmatrix(k + 1, n - 1, k, k);  // 尺寸为 (n-k-1)×1
+        auto [v, beta] = x.householder();
+        
+        // 左乘更新: H(k+1:n-1, k:n-1)  = H(k+1:n-1, k:n-1) - beta*v*(v^T * H(k+1:n-1, k:n-1))
+        Matrix subH_left = H.getSubmatrix(k + 1, n - 1, k, n - 1);
+        Matrix temp_left = (v.T()) * subH_left; // 1×(n-k)
+        subH_left = subH_left - beta * (v * temp_left);
+        H.setSubmatrix(k + 1, k, subH_left);
+        
+        // 右乘更新: H(0:n-1, k+1:n-1) = H(0:n-1, k+1:n-1) - beta*(H(0:n-1, k+1:n-1) * v)*v^T
+        Matrix subH_right = H.getSubmatrix(0, n - 1, k + 1, n - 1);
+        Matrix temp_right = subH_right * v;  // (n×1) 列向量
+        subH_right = subH_right - beta * (temp_right * (v.T()));
+        H.setSubmatrix(0, k + 1, subH_right);
+        
+        // 更新累计正交矩阵 Q: Q(:, k+1:n-1) = Q(:, k+1:n-1) - beta*(Q(:, k+1:n-1) * v)*v^T
+        Matrix subQ = Q.getSubmatrix(0, n - 1, k + 1, n - 1);
+        Matrix tempQ = subQ * v;
+        subQ = subQ - beta * (tempQ * (v.T()));
+        Q.setSubmatrix(0, k + 1, subQ);
+    }
+    // 将 H 中除主对角线和次对角线外的下三角部分清零
+    for (int i = 2; i < n; i++) {
+        for (int j = 0; j < i - 1; j++) {
+            H(i, j) = 0;
+        }
+    }
+    return std::make_pair(H, Q);
 }
 
 std::pair<ColVector,double> Matrix::householder() const{
