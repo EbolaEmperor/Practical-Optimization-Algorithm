@@ -46,7 +46,7 @@ ColVector bfgs(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -88,7 +88,7 @@ ColVector bfgs_goldstein(double (*f)(const ColVector&), ColVector (*grad)(const 
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -133,7 +133,7 @@ ColVector bfgs_simple(double (*f)(const ColVector&), ColVector (*grad)(const Col
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -174,7 +174,7 @@ ColVector dfp(double (*f)(const ColVector&), ColVector (*grad)(const ColVector&)
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -218,7 +218,7 @@ ColVector broyden(double (*f)(const ColVector&), ColVector (*grad)(const ColVect
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -262,7 +262,7 @@ ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const 
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -303,7 +303,7 @@ ColVector bfgs_goldstein_gradfree(double (*f)(const ColVector&), ColVector curre
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -343,7 +343,7 @@ ColVector dfp_gradfree(double (*f)(const ColVector&), ColVector current, const d
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
@@ -387,7 +387,7 @@ ColVector broyden_gradfree(double (*f)(const ColVector&), ColVector current,
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;
-    std::cerr << "OPtimal Value: " << f(current) << std::endl << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
 #endif
     return current;
 }
