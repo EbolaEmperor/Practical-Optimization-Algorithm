@@ -93,9 +93,11 @@ public:
 
 //下面是1.1.0版本新增函数，用于求解矩阵的特征值，预计下一版本添加反幂法求特征向量
 public:
+    std::tuple<Matrix, Matrix, Matrix> svd() const;
     std::vector<Complex> eigen() const;
     std::pair<Matrix,Matrix> getQR() const;
 private:
+    ColVector getEigenVector(double lambda) const;
     Matrix realSchur() const;
     std::pair<Matrix,Matrix> hessenberg() const;
     std::pair<ColVector,double> householder() const;
@@ -127,6 +129,7 @@ public:
     ColVector(const int &n): Matrix(n,1) {};
     ColVector(const int &n, const double *p): Matrix(n,1,p) {};
     ColVector(const Matrix &rhs);
+    ColVector(const std::vector<double> &rhs);
     int size() const;
     void sort();
     const double operator ()(const int &x) const;
@@ -257,6 +260,14 @@ Matrix::~Matrix(){
 }
 bool Matrix::empty() const{
     return n==0 || m==0;
+}
+
+ColVector::ColVector(const std::vector<double> &rhs){
+    n = rhs.size();
+    m = 1;
+    a = new double[n];
+    for(int i = 0; i < n; i++)
+        a[i] = rhs[i];
 }
 
 Matrix & Matrix::operator = (const Matrix & rhs){
@@ -1458,6 +1469,51 @@ bool Matrix::isComplexEigen() const{
     return delta < -1e-13;
 }
 
+double norm(const ColVector &x, int p = 2){
+    if(p == 0) return max(abs(x));
+    else if(p == 1) return sum(abs(x));
+    else if(p == 2) return sqrt(x.sqrsum());
+    else return -1;
+}
+
+ColVector Matrix::getEigenVector(double lambda) const{
+    const Matrix &A = (*this);
+    Matrix B = A - lambda * eye(n);
+    ColVector v(n); v(0) = 1;
+    int step = 0;
+    while(norm(A * v - lambda * v) >= 1e-15){
+        ColVector y = B.solve(v);
+        v = y / norm(y);
+        if(++step == 2) break;
+    }
+    return v;
+}
+
+std::tuple<Matrix, Matrix, Matrix> Matrix::svd() const{
+    Matrix Atil(n*2, n*2);
+    // A 的奇异值就是 Atil 的正特征值
+    Atil.setSubmatrix(n, 0, (*this));
+    Atil.setSubmatrix(0, n, (*this).T());
+    auto eig = Atil.eigen();
+    std::vector<double> realEigen;
+    for(auto x : eig)
+        if(x.real() > 0)
+            realEigen.push_back(x.real());
+    sort(realEigen.begin(), realEigen.end(), std::greater<double>());
+
+    Matrix U(n, n), V(n, n);
+    int idx = 0;
+    for(auto x : realEigen){
+        // 反幂法求特征向量
+        ColVector v = Atil.getEigenVector(x);
+        v = v * sqrt(2.0);
+        V.setSubmatrix(0, idx, v.getSubmatrix(0, n-1, 0, 0));
+        U.setSubmatrix(0, idx, v.getSubmatrix(n, n*2-1, 0, 0));
+        idx++;
+    }
+    return std::make_tuple(U, diag(ColVector(realEigen)), V);
+}
+
 Matrix randMatrix(const int &n, const int &m){
     Matrix A(n,m);
     for(int i = 0; i < n; i++)
@@ -1472,13 +1528,6 @@ Matrix randInvertibleMatrix(const int &n){
         A = randMatrix(n, n);
     }
     return A;
-}
-
-double norm(const ColVector &x, int p = 2){
-    if(p == 0) return max(abs(x));
-    else if(p == 1) return sum(abs(x));
-    else if(p == 2) return sqrt(x.sqrsum());
-    else return -1;
 }
 
 Matrix tril(const Matrix &A, int d = 0){
