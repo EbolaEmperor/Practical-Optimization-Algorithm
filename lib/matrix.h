@@ -90,8 +90,8 @@ public:
     Matrix pinv() const;
     double sqrsum() const;
     void setdiag(const ColVector &d);
+    std::tuple<Matrix, Matrix, Matrix> PLU() const;
 
-//下面是1.1.0版本新增函数，用于求解矩阵的特征值，预计下一版本添加反幂法求特征向量
 public:
     std::tuple<Matrix, Matrix, Matrix> svd() const;
     std::vector<Complex> eigen() const;
@@ -1564,6 +1564,50 @@ double dot(const ColVector &x, const ColVector &y){
     for(int i = 0; i < x.size(); i++)
         res += x(i) * y(i);
     return res;
+}
+
+std::tuple<Matrix, Matrix, Matrix> PLU(Matrix A) {
+    int n = A.n, m = A.m;
+    Matrix L = (n >= m) ? zeros(n, m) : zeros(n, n);
+    Matrix U = (n >= m) ? zeros(m, m) : zeros(n, m);
+    std::vector<int> P(n);
+    for (int i = 0; i < n; ++i) P[i] = i;
+    int mm = std::min(n, m);
+    for (int i = 0; i < mm; ++i) L(i, i) = 1.0;
+    for (int k = 0; k < mm; ++k) {
+        int pivot = k;
+        double maxv = std::fabs(A(k, k));
+        for (int i = k + 1; i < n; ++i) {
+            if (std::fabs(A(i, k)) > maxv) {
+                maxv = std::fabs(A(i, k));
+                pivot = i;
+            }
+        }
+        if (maxv == 0.0) {
+            std::cerr << "[Matrix] PLU:: cannot decompose matrix" << std::endl;
+            return std::make_tuple(Matrix(), Matrix(), Matrix());
+        }
+        if (pivot != k) {
+            for (int j = 0; j < m; ++j) std::swap(A(k, j), A(pivot, j));
+            for (int j = 0; j < k; ++j) std::swap(L(k, j), L(pivot, j));
+            std::swap(P[k], P[pivot]);
+        }
+        for (int j = k; j < m; ++j) U(k, j) = A(k, j);
+        for (int i = k + 1; i < n; ++i) {
+            L(i, k) = A(i, k) / U(k, k);
+            for (int j = k + 1; j < m; ++j) {
+                A(i, j) -= L(i, k) * U(k, j);
+            }
+            A(i, k) = 0.0;
+        }
+    }
+    Matrix Pmat(n, n);
+    for (int i = 0; i < n; ++i) Pmat(P[i], i) = 1.0;
+    return std::make_tuple(Pmat, L, U);
+}
+
+std::tuple<Matrix, Matrix, Matrix> Matrix::PLU() const {
+    return ::PLU(*this);
 }
 
 #endif
