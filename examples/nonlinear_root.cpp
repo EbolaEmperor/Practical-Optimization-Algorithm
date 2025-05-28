@@ -45,9 +45,9 @@ int main(){
     try {
         cout << "------------------- Muller Method ------------------" << endl;
         Complex root = findzero_muller(compf, 
-                                       Complex(1.5, 0.0), 
-                                       Complex(1.75, 0.0), 
-                                       Complex(2.0, 0.0), 
+                                       Complex(-1.0, 3.1), 
+                                       Complex(-0.8, 3.3), 
+                                       Complex(-0.6, 3.5), 
                                        1e-12);
         cout << "\nRoot found: " << root.real() << "+" << root.imag() << "i" << endl;
         cout << "|f(root)| = " << std::abs(compf(root)) << endl << endl;

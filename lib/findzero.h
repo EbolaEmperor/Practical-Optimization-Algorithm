@@ -70,13 +70,9 @@ Num findzero_secant(Func f, Num x0, Num x1,
     return x1;
 }
 
-double realsign(double x) {
+double _sign(double x) {
     if (fabs(x) < 1e-15) return 0.0;
     else return x > 0.0 ? 1.0 : -1.0;
-}
-
-Complex compsign(const Complex& z) {
-    return Complex(realsign(z.real()), realsign(z.imag()));
 }
 
 template <typename Func>
@@ -90,7 +86,7 @@ Complex findzero_muller(Func f, Complex x0, Complex x1, Complex x2,
         Complex b = df12 + a * (x2 - x1);
         Complex c = f2;
         Complex discriminant = b * b - 4.0 * a * c;
-        Complex x3 = x2 - 2.0 * c * compsign(b) / (std::sqrt(discriminant) + std::abs(b));
+        Complex x3 = x2 - 2.0 * c * _sign(b.real()) / (std::sqrt(discriminant) + std::abs(b));
         Complex f3 = f(x3);
 #ifdef DEBUG
         std::cout << "Iteration " << i << ": x = " << x3
