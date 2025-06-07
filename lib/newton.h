@@ -20,8 +20,6 @@ ColVector newton(double (*f)(const ColVector&), ColVector (*grad)(const ColVecto
         step++;
         ColVector searchDirection = solveByLDL(hessian(current), -grad(current));
         current += searchDirection;
-        //std::cout << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
-        // 这是用于输出每一步迭代信息的测试语句，可以删除
     }
     std::cout << "Total steps: " << step << std::endl;
     return current;
@@ -43,9 +41,46 @@ ColVector newton_gradfree(double (*f)(const ColVector&), ColVector current, cons
         if(grad.vecnorm(2)<=eps) break;
         ColVector searchDirection = solveByLDL(hesse(f,current), -grad);
         current += searchDirection;
-#ifdef debug
+#ifdef DEBUG
         std::cerr << "step: " << step << "    current=" << current.T() << "    direction=" << searchDirection.T() << "    f=" << f(current) << std::endl;
 #endif
+    }
+    return current;
+}
+
+/*********************************************************************************
+ *
+ * 这是一个纯牛顿法的通用求零点程序
+ * 用法： x = newton_zero(f,grad,x0,[eps])
+ * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，x0是初始位置，eps是收敛精度
+ * 注意：牛顿法只适用于Hessian矩阵正定的函数
+ *
+ **********************************************************************************/
+ColVector newton_zero(ColVector (*f)(const ColVector&), Matrix (*jacobi)(const ColVector&), ColVector current, const double eps=1e-5){
+    int step = 0;
+    while(f(current).vecnorm(2)>eps){
+        step++;
+        ColVector searchDirection = solve(-jacobi(current), f(current));
+        current += searchDirection;
+    }
+    std::cout << "Total steps: " << step << std::endl;
+    return current;
+}
+
+/*********************************************************************************
+ *
+ * 这是一个纯牛顿法的通用求零点程序，无须人工求导
+ * 用法： x = newton_zero_gradfree(f,x0,[eps])
+ * 其中f是原函数，grad是梯度函数，hessian是Hessian矩阵函数，x0是初始位置，eps是收敛精度
+ * 注意：牛顿法只适用于Hessian矩阵正定的函数
+ *
+ **********************************************************************************/
+ColVector newton_zero_gradfree(ColVector (*f)(const ColVector&), ColVector current, const double eps=1e-5){
+    int step = 0;
+    while(f(current).vecnorm(2)>eps){
+        step++;
+        ColVector searchDirection = solve(-jacobi(f, current), f(current));
+        current += searchDirection;
     }
     std::cout << "Total steps: " << step << std::endl;
     return current;

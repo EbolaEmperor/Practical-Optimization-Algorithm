@@ -63,7 +63,7 @@ ColVector nonlinlsq_LM(ColVector (*F)(const ColVector&), Matrix (*J)(const ColVe
         current = current + alpha*direct;
     }
 #ifndef SILENCE
-    std::cerr << "---------- Least Square Problem Levenberg-Marquardt Method ----------" << std::endl;
+    std::cerr << "---------- Least Square Problem Levenberg-Marquardt Method ----------\n" << std::endl;
     if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
     else std::cerr << "Terminated. Too many steps." << std::endl;
     std::cerr << "Optimal Point: " << current.T() << std::endl;

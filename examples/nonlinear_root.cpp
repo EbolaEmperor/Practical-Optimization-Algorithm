@@ -1,4 +1,5 @@
-#define DEBUG
+#include "lib/newton.h"
+#include "lib/least_square.h"
 #include "lib/findzero.h"
 #include <iomanip>
 using namespace std;
@@ -13,6 +14,22 @@ double df(double x) {
 
 Complex compf(Complex x) {
     return x * x * x + 10.0 * x - 20.0;
+}
+
+ColVector g(const ColVector &x) {
+    ColVector res(2);
+    res[0] = x[0]*x[0] + x[1]*x[1] - 4;
+    res[1] = x[0]*x[0]*x[0] - x[1];
+    return res;
+}
+
+Matrix Jg(const ColVector &x) {
+    Matrix res(2, 2);
+    res[0][0] = 2 * x[0];
+    res[0][1] = 2 * x[1];
+    res[1][0] = 3 * x[0] * x[0];
+    res[1][1] = -1;
+    return res;
 }
 
 int main(){
@@ -55,6 +72,37 @@ int main(){
                                        1e-3);
         cout << "\nRoot found: " << root.real() << "+" << root.imag() << "i" << endl;
         cout << "|f(root)| = " << std::abs(compf(root)) << endl << endl;
+    } catch (const std::runtime_error& e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+
+    try {
+        cout << "------------------- Newton Method (2-dim) -------------------\n" << endl;
+        ColVector x0(2);
+        x0[0] = x0[1] = 1;
+        ColVector root = newton_zero(g, Jg, x0, 1e-13);
+        cout << "Root found: " << root.T() << endl;
+        cout << "f(root) = " << g(root).T() << endl << endl;
+    } catch (const std::runtime_error& e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+
+    try {
+        cout << "------------------- Newton Method Grad-Free (2-dim) -------------------\n" << endl;
+        ColVector x0(2);
+        x0[0] = x0[1] = 1;
+        ColVector root = newton_zero_gradfree(g, x0, 1e-13);
+        cout << "Root found: " << root.T() << endl;
+        cout << "f(root) = " << g(root).T() << endl << endl;
+    } catch (const std::runtime_error& e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+
+    // Levenberg-Marquardt Method (2-dim)
+    try {
+        ColVector x0(2);
+        x0[0] = x0[1] = 1;
+        ColVector root = nonlinlsq_LM(g, Jg, x0, 1e-13);
     } catch (const std::runtime_error& e) {
         cerr << "Error: " << e.what() << endl;
     }
