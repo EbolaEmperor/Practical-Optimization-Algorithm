@@ -14,6 +14,8 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <vector>
+#include <tuple>
 #include "fraction.h"
 
 class fracMatrix{
@@ -31,6 +33,11 @@ public:
         a.resize(n*m);
         for(int i = 0; i < n*m; i++)
             a[i] = fraction(0,1);
+    }
+    fracMatrix(const int &_n, const int &_m, const std::vector<fraction> &val){
+        n = _n;
+        m = _m;
+        a = val;
     }
     fracMatrix(const fracMatrix &A){
         n = A.n;
@@ -66,6 +73,14 @@ public:
         return a[i*m+j];
     }
     const fraction & element(const int &i, const int &j) const{
+        return a[i*m+j];
+    }
+
+    fraction & operator() (const int &i, const int &j){
+        return a[i*m+j];
+    }
+
+    const fraction & operator() (const int &i, const int &j) const{
         return a[i*m+j];
     }
 
@@ -261,7 +276,6 @@ public:
         }
         return ans;
     }
-
 };
 
 fracMatrix hilbert(const int &n){
@@ -293,6 +307,40 @@ fracMatrix eye(const int &n){
 
 fraction value(const fracMatrix &A){
     return A.element(0,0);
+}
+
+std::tuple<fracMatrix, fracMatrix, fracMatrix> LU(fracMatrix A) {
+    int n = A.n, m = A.m;
+    std::vector<int> P(n);
+    for (int i = 0; i < n; ++i) P[i] = i;
+    fracMatrix L = (n >= m) ? zeros(n, m) : zeros(n, n);
+    fracMatrix U = (n >= m) ? zeros(m, m) : zeros(n, m);
+    int mm = std::min(n, m);
+    for (int i = 0; i < mm; ++i) L(i, i) = 1.0;
+    for (int k = 0; k < mm; ++k) {
+        if (A(k,k) == 0) {
+            int pivot = k;
+            while(pivot < n && A(pivot, k) == 0) pivot++;
+            if (pivot == n) {
+                std::cerr << "[fracMatrix] LU:: cannot decompose a singular matrix as LU." << std::endl;
+                return std::make_tuple(fracMatrix(), fracMatrix(), fracMatrix());
+            }
+            std::swap(P[k], P[pivot]);
+            for (int j = 0; j < m; ++j) std::swap(A(k, j), A(pivot, j));
+            for (int j = 0; j < k; ++j) std::swap(L(k, j), L(pivot, j));
+        }
+        for (int j = k; j < m; ++j) U(k, j) = A(k, j);
+        for (int i = k + 1; i < n; ++i) {
+            L(i, k) = A(i, k) / U(k, k);
+            for (int j = k + 1; j < m; ++j) {
+                A(i, j) -= L(i, k) * U(k, j);
+            }
+            A(i, k) = 0;
+        }
+    }
+    fracMatrix Pmat(n, n);
+    for (int i = 0; i < n; ++i) Pmat(P[i], i) = 1;
+    return std::make_tuple(Pmat, L, U);
 }
 
 #endif
