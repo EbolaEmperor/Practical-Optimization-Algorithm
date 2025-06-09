@@ -18,6 +18,10 @@ int main(){
     y = newton_wolfe(rosenbrock::f, rosenbrock::grad, rosenbrock::hessian, rosenbrock::initial(), 1e-6, 0.1, 0.3);
     cout << "min f = (" << y.T() << ") = " << rosenbrock::f(y) << endl << endl;
 
+    cout << "Steepest Descent Method With Exact Search" << endl;
+    y = steepest_descent_exact(rosenbrock::f, rosenbrock::grad, rosenbrock::initial(), 1e-7);
+    cout << "min f = (" << y.T() << ") = " << rosenbrock::f(y) << endl << endl;
+
     cout << "Steepest Descent Method With Wolfe Search" << endl;
     y = steepest_descent(rosenbrock::f, rosenbrock::grad, rosenbrock::initial(), 1e-7, 0.1, 0.3);
     cout << "min f = (" << y.T() << ") = " << rosenbrock::f(y) << endl << endl;
