@@ -25,6 +25,25 @@ double partial(double (*f)(const ColVector&), const ColVector &x, const int &j, 
     return g1;
 }
 
+double direction_partial(double (*f)(const ColVector&), const ColVector &x, ColVector d, const double err=1e-6){
+    const int n = x.n;
+    if(d.n != n){
+        std::cerr << "direction_partial():: incompatible dimensions" << std::endl;
+        return 0;
+    }
+    d = d / d.vecnorm(2) * (err * 10);
+    double alpha = 0.5 / (err * 10);
+    double g1 = alpha*(f(x+d)-f(x-d)), g2 = g1+10*err;
+    int step = 0;
+    while(fabs(g2-g1)>err && ++step<12){
+        alpha *= 10;
+        d = 0.1 * d;
+        g2 = g1;
+        g1 = alpha*(f(x+d)-f(x-d));
+    }
+    return g1;
+}
+
 ColVector gradient(double (*f)(const ColVector&), const ColVector &x, const double err=1e-6){
     const int n = x.n;
     ColVector g(n);

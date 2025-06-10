@@ -267,6 +267,48 @@ ColVector bfgs_gradfree(double (*f)(const ColVector&), ColVector current, const 
     return current;
 }
 
+/***********************************************************************************************
+ *
+ * 这是一个BFGS拟牛顿法的通用最优化程序，可自动求导，一维搜索采用 simple 搜索
+ * 用法：sol=bfgs(f,x0,[err],[rho],[sigma])
+ * 其中f是待求解函数,x0是初始迭代位置，err是允许误差，rho,sigma 是 simple 的参数
+ * 返回值是BFGS方法求得的最小值点
+ *
+ ***********************************************************************************************/
+ColVector bfgs_simple_gradfree(double (*f)(const ColVector&), ColVector current, const double err=1e-5, const double rho=0.55, const double sigma=0.4, const int MAXN=5000){
+    const int n = current.n;
+    Matrix B = eye(n);
+    int step = 0;
+    while(gradient(f,current).vecnorm(2) > err){
+        step++;
+        if(step>MAXN) break;
+        ColVector direction = -solveByLDL(B,gradient(f,current));
+        //direction = (1.0/direction.vecnorm(2))*direction;
+        double alpha = simple_search_gradfree(f,current,direction,rho,sigma);
+        ColVector s = alpha*direction;
+        ColVector y = gradient(f,current+s) - gradient(f,current);
+        current = current + s;
+        if(y.T()*s>0)
+            B = B - (1.0/(s.T()*B*s)) * ((B*s)*(s.T()*B)) + (1.0/(y.T()*s)) * (y*y.T());
+#ifdef DEBUG
+        std::cout << "-----------------------------------------------------" << std::endl;
+        std::cout << "Step: " << step << std::endl;
+        std::cout << "current = " << current.T() << std::endl;
+        std::cout << "direction = " << direction.T() << std::endl;
+        std::cout << "f = " << f(current)  << std::endl;
+        std::cout << "||grad|| = " << gradient(f,current).vecnorm(2) << std::endl << std::endl;
+#endif
+    }
+#ifndef SILENCE
+    std::cerr << "---------- Non-Constraint Optimal BFGS Method with Armijo Condition (gradfree) ----------" << std::endl;
+    if(step<=MAXN) std::cerr << "Finished Succesfully. Total Steps: " << step << std::endl;
+    else std::cerr << "Terminated. Too many steps." << std::endl;
+    std::cerr << "Optimal Point: " << current.T() << std::endl;
+    std::cerr << "Optimal Value: " << f(current) << std::endl << std::endl;
+#endif
+    return current;
+}
+
 /*****************************************************************************************
  *
  * 这是一个BFGS拟牛顿法的通用最优化程序，可自动求导，一维搜索采用Goldstein准则

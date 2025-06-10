@@ -1,5 +1,5 @@
 /*
-    最优连接问题：平面上给定 n 个点，如何以最小的代价将它们连接起来？
+    二维欧氏距离斯坦纳树问题：平面上给定 n 个点，如何以最小的代价将它们连接起来？
 
     显然连的线都是直的，但不一定全都是给定点之间直接相连。
     例如等边三角形的三个顶点，将三个顶点到三角形重心连起来，才是最优的。
@@ -195,39 +195,128 @@ namespace FermatPoint {
     }
 }
 
-int main() {
-    const int n = 25; // 固定点数量
+/*------------------------------------------------------------
+    在 opt 的基础上检查 MST 中是否存在夹角 <120° 的情况，
+    若存在则新增费马点并再次优化，直至不存在此类夹角
+------------------------------------------------------------*/
+ColVector refineWithSteiner(ColVector free_pts,
+                            double   &best_cost,
+                            int       max_round = 20,
+                            double    ang_eps   = 1e-3,
+                            double    dup_eps   = 1e-2)
+{
+    const double ANG_THRESH = 2.0 * std::acos(-1.0) / 3.0 - ang_eps;   // 120°
+    int  round = 0;
 
+    while (round < max_round) {
+        ++round;
+
+        /*----------- 1. 组装完整点集 -----------*/
+        vector<Point> all_pts = fixed_points;
+        int m = free_pts.size() / 2;
+        all_pts.reserve(fixed_points.size() + m);
+        for (int i = 0; i < m; ++i)
+            all_pts.emplace_back(free_pts[2 * i], free_pts[2 * i + 1]);
+
+        /*----------- 2. 求 MST -----------*/
+        Prim prim(all_pts.size());
+        for (int i = 0; i < (int)all_pts.size(); ++i)
+            for (int j = i + 1; j < (int)all_pts.size(); ++j)
+                prim.add_edge(i, j, dist(all_pts[i], all_pts[j]));
+        prim.minimum_spanning_tree(true);
+        const auto &edges = prim.get_mst_edges();
+
+        /*----------- 3. 邻接表 -----------*/
+        vector<vector<int>> adj(all_pts.size());
+        for (auto [u, v] : edges) { adj[u].push_back(v); adj[v].push_back(u); }
+
+        /*----------- 4. 小于 120° 的夹角 → 费马点 -----------*/
+        vector<Point> add_pts;
+        for (int u = 0; u < (int)adj.size(); ++u) {
+            const auto &nei = adj[u];
+            for (int i = 0; i + 1 < (int)nei.size(); ++i)
+                for (int j = i + 1; j < (int)nei.size(); ++j) {
+                    Point v1 = {all_pts[nei[i]].first - all_pts[u].first,
+                                all_pts[nei[i]].second - all_pts[u].second};
+                    Point v2 = {all_pts[nei[j]].first - all_pts[u].first,
+                                all_pts[nei[j]].second - all_pts[u].second};
+                    double cosang = FermatPoint::dot(v1, v2) /
+                                    (FermatPoint::norm(v1)*FermatPoint::norm(v2)+1e-18);
+                    cosang = std::clamp(cosang, -1.0, 1.0);
+                    if (std::acos(cosang) >= ANG_THRESH) continue;
+
+                    try {
+                        Point fp = FermatPoint::FermatPoint(all_pts[u], all_pts[nei[i]], all_pts[nei[j]]);
+                        bool dup = false;
+                        for (const auto &q : all_pts)
+                            if (dist(fp, q) < dup_eps) { dup = true; break; }
+                        if (!dup)
+                            for (const auto &q : add_pts)
+                                if (dist(fp, q) < dup_eps) { dup = true; break; }
+                        if (!dup) add_pts.push_back(fp);
+                    } catch (...) {/* 顶角≥120°，跳过 */}
+                }
+        }
+        if (add_pts.empty()) break;          // 没有新点 → 结束
+
+        /*----------- 5. 重新打包自由点向量并优化 -----------*/
+        int new_m = m + add_pts.size();
+        ColVector new_free(2 * new_m);
+        for (int i = 0; i < m; ++i) {
+            new_free[2*i]   = free_pts[2*i];
+            new_free[2*i+1] = free_pts[2*i+1];
+        }
+        for (int i = 0; i < (int)add_pts.size(); ++i) {
+            new_free[2*(m+i)]   = add_pts[i].first;
+            new_free[2*(m+i)+1] = add_pts[i].second;
+        }
+
+        ColVector opt = bfgs_simple_gradfree(costFunc, new_free, 1e-4);
+        double    c   = costFunc(opt);
+        if (c + 1e-9 >= best_cost) break;    // 成本无明显改进 → 提前终止
+
+        best_cost = c;       // 更新全局最佳
+        free_pts  = std::move(opt);
+    }
+    return free_pts;
+}
+
+int main() {
+    const int n = 20;
     mt19937 gen0(114);
     uniform_real_distribution<double> dis(0.0, 100.0);
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n; i++) {
         fixed_points.emplace_back(dis(gen0), dis(gen0));
     }
 
     // 寻找所有费马点，距离阈值为 30.0，超过这个距离的点构成的三角形不考虑
-    auto fermat_points = FermatPoint::getFermatPoints(fixed_points, 30.0);
+    auto fermat_points = FermatPoint::getFermatPoints(fixed_points);
     cout << "Fermat points found: " << fermat_points.size() << endl;
 
-    cout << "--------------------- FR Nonliner CG Method ---------------------" << endl;
     ColVector min_opt;
-    double min_cost = numeric_limits<double>::max();
+    double    min_cost = numeric_limits<double>::max();
 
-    for (int T = 0; T < 200; T++) {
-        const int m = n; // 自由点数量
+    for (int T = 0; T < 10; ++T) {
+        const int m = n / 2;                    // 初始自由点数量
         ColVector free_points(2 * m);
-        shuffle(fermat_points.begin(), fermat_points.end(), gen0);
+        // shuffle(fermat_points.begin(), fermat_points.end(), gen0);
         for (int i = 0; i < m; ++i) {
-            free_points[2 * i]     = fermat_points[i].first;
-            free_points[2 * i + 1] = fermat_points[i].second;
+            free_points[2*i]     = dis(gen0);
+            free_points[2*i + 1] = dis(gen0);
         }
-        auto opt = CG_FR_gradfree(costFunc, free_points, 1e-3, 0.1, 0.4);
-        double cost = costFunc(opt);
-        if (cost < min_cost) {
-            min_cost = cost;
-            min_opt = opt;
-        }
-        cout << "Minimum cost: " << cost << " (Min: " << min_cost << ")" << endl;
+
+        ColVector opt  = bfgs_simple_gradfree(costFunc, free_points, 1e-3);
+        double    cost = costFunc(opt);
+
+        /*----------- 立刻进行最后检查 / 精炼 -----------*/
+        opt = refineWithSteiner(opt, cost);
+
+        if (cost < min_cost) { min_cost = cost; min_opt = opt; }
+        cout << "Run " << T << ", cost = " << cost << "  (best = " << min_cost << ")\n";
     }
-    min_cost = costFunc(min_opt, true);
+
+    /*----------- 绘制最终结果并输出 -----------*/
+    cout << "Final minimum cost: " << min_cost << endl;
+    costFunc(min_opt, true);
     return 0;
 }
